@@ -1,0 +1,6 @@
+apiVersion: v2
+name: miroir-stack
+description: Stack de donnees Miroir (PostgreSQL+pgvector, Redis, MinIO)
+type: application
+version: 0.1.0
+appVersion: "1.0"

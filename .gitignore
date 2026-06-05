@@ -1,0 +1,17 @@
+.venv/
+__pycache__/
+*.pyc
+.env
+.DS_Store
+data/raw/
+data/processed/
+data/synthetic/
+*.zip
+.terraform/
+*.tfstate
+*.tfstate.backup
+.ipynb_checkpoints/
+
+*.tfvars
+!*.tfvars.example
+tfplan

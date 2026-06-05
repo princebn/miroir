@@ -1,0 +1,14 @@
+postgres:
+  image: pgvector/pgvector:pg16
+  user: miroir
+  password: miroir_local_pwd
+  db: miroir
+  storage: 2Gi
+redis:
+  image: redis:7-alpine
+  password: miroir_redis_pwd
+minio:
+  image: minio/minio:latest
+  rootUser: miroir_admin
+  rootPassword: miroir_minio_pwd
+  storage: 5Gi

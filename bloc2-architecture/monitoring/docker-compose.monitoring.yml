@@ -1,0 +1,57 @@
+name: miroir-monitoring
+
+services:
+  prometheus:
+    image: prom/prometheus:latest
+    container_name: miroir-prometheus
+    restart: unless-stopped
+    volumes:
+      - ./prometheus.yml:/etc/prometheus/prometheus.yml:ro
+      - prometheus_data:/prometheus
+    ports:
+      - "9090:9090"
+    networks:
+      - miroir-net
+
+  grafana:
+    image: grafana/grafana:latest
+    container_name: miroir-grafana
+    restart: unless-stopped
+    environment:
+      GF_SECURITY_ADMIN_USER: admin
+      GF_SECURITY_ADMIN_PASSWORD: miroir_grafana_pwd
+    volumes:
+      - ./grafana/provisioning:/etc/grafana/provisioning:ro
+      - grafana_data:/var/lib/grafana
+    ports:
+      - "3000:3000"
+    networks:
+      - miroir-net
+
+  postgres-exporter:
+    image: quay.io/prometheuscommunity/postgres-exporter:latest
+    container_name: miroir-postgres-exporter
+    restart: unless-stopped
+    environment:
+      DATA_SOURCE_NAME: "postgresql://miroir:miroir_local_pwd@miroir-postgres:5432/miroir?sslmode=disable"
+    networks:
+      - miroir-net
+
+  redis-exporter:
+    image: oliver006/redis_exporter:latest
+    container_name: miroir-redis-exporter
+    restart: unless-stopped
+    environment:
+      REDIS_ADDR: "redis://miroir-redis:6379"
+      REDIS_PASSWORD: "miroir_redis_pwd"
+    networks:
+      - miroir-net
+
+volumes:
+  prometheus_data:
+  grafana_data:
+
+networks:
+  miroir-net:
+    external: true
+    name: miroir_miroir-net

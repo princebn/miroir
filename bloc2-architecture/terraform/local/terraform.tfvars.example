@@ -1,0 +1,3 @@
+minio_server   = "localhost:9000"
+minio_user     = "<minio_access_key>"
+minio_password = "<minio_secret_key>"
