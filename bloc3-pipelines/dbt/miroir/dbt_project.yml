@@ -1,0 +1,12 @@
+name: 'miroir'
+version: '1.0.0'
+profile: 'miroir'
+model-paths: ["models"]
+target-path: "target"
+clean-targets: ["target", "dbt_packages"]
+models:
+  miroir:
+    staging:
+      +materialized: view
+    marts:
+      +materialized: table

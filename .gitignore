@@ -15,3 +15,11 @@ data/synthetic/
 *.tfvars
 !*.tfvars.example
 tfplan
+
+# Bloc 3
+.venv-airflow/
+bloc3-pipelines/airflow/
+bloc3-pipelines/dbt/miroir/target/
+bloc3-pipelines/dbt/miroir/dbt_packages/
+bloc3-pipelines/dbt/miroir/logs/
+__pycache__/

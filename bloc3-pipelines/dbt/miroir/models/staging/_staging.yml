@@ -1,0 +1,14 @@
+version: 2
+models:
+  - name: stg_stream_transactions
+    description: "Flux H&M nettoye et type."
+    columns:
+      - name: customer_id
+        tests: [not_null]
+      - name: article_id
+        tests: [not_null]
+      - name: sales_channel_id
+        tests:
+          - not_null
+          - accepted_values:
+              values: [1, 2]

@@ -1,0 +1,7 @@
+version: 2
+models:
+  - name: mart_channel_daily
+    description: "Volume quotidien par canal de vente."
+    columns:
+      - name: n_transactions
+        tests: [not_null]
