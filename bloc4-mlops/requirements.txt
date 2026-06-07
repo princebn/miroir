@@ -1,0 +1,20 @@
+# Bloc 4 - dépendances cœur (versions verrouillées dans les étapes suivantes)
+torch
+open-clip-torch
+pillow
+psycopg2-binary
+sqlalchemy
+pgvector
+pandas
+numpy
+scikit-learn
+lightgbm
+mlflow
+fastapi
+uvicorn[standard]
+prometheus-client
+evidently
+pytest
+pytest-cov
+ruff
+black
