@@ -103,3 +103,15 @@ def test_recommend_endpoint_validates_client_id_not_empty():
     client = TestClient(app)
     r = client.post("/recommend", json={"client_id": "", "occasion": "bureau", "k": 5})
     assert r.status_code == 422
+
+
+def test_feedback_validates_action():
+    client = TestClient(app)
+    r = client.post("/feedback", json={"client_id": "abc", "item_id": "1", "occasion": "bureau", "action": "maybe"})
+    assert r.status_code == 422
+
+
+def test_feedback_validates_occasion():
+    client = TestClient(app)
+    r = client.post("/feedback", json={"client_id": "abc", "item_id": "1", "occasion": "invalide", "action": "approved"})
+    assert r.status_code == 422

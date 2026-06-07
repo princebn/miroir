@@ -32,3 +32,17 @@ class HealthResponse(BaseModel):
     status: str
     model_version: Optional[str] = None
     n_catalog_items: Optional[int] = None
+
+
+class FeedbackRequest(BaseModel):
+    client_id: str = Field(..., min_length=1, max_length=64)
+    item_id: str = Field(..., min_length=1)
+    occasion: OccasionType
+    action: Literal["approved", "rejected"]
+    score: Optional[float] = None
+    model_version: Optional[str] = None
+
+
+class FeedbackResponse(BaseModel):
+    feedback_id: int
+    status: str = "recorded"

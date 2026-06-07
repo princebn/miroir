@@ -17,8 +17,12 @@ from api.anchor import style_anchor_for_client
 from api.model import get_model_version, load_reranker
 from api.recommend import recommend as recommend_orchestrator
 from api.retrieval import retrieve_candidates
-from api.schemas import HealthResponse, RecommendRequest, RecommendResponse
+from api.schemas import FeedbackRequest, FeedbackResponse, HealthResponse, RecommendRequest, RecommendResponse
 from src.reranker.features import ITEM_CATEGORICAL_COLS
+import psycopg2
+from api.retrieval import PG_DB, PG_HOST, PG_PASSWORD, PG_PORT, PG_USER
+from prometheus_client import Counter
+from prometheus_fastapi_instrumentator import Instrumentator
 
 logging.basicConfig(level=logging.INFO, format="%(asctime)s %(levelname)s %(message)s")
 logger = logging.getLogger("miroir.api")
@@ -126,6 +130,8 @@ async def lifespan(app):
 
 
 app = FastAPI(title="Miroir Recommendation API", version="0.1.0", lifespan=lifespan)
+Instrumentator().instrument(app).expose(app)
+FEEDBACK_COUNTER = Counter("miroir_feedback_total", "Feedback events by action", ["action"])
 
 
 @app.get("/health", response_model=HealthResponse)
@@ -155,3 +161,17 @@ def recommend_endpoint(req: RecommendRequest):
     except KeyError as e:
         raise HTTPException(404, str(e))
     return RecommendResponse(client_id=req.client_id, occasion=req.occasion, items=items)
+
+
+@app.post("/feedback", response_model=FeedbackResponse)
+def feedback_endpoint(req: FeedbackRequest):
+    with psycopg2.connect(host=PG_HOST, port=PG_PORT, dbname=PG_DB, user=PG_USER, password=PG_PASSWORD) as conn, conn.cursor() as cur:
+        cur.execute(
+            "INSERT INTO signals.feedback (client_id, item_id, occasion, action, score, model_version) "
+            "VALUES (%s, %s, %s, %s, %s, %s) RETURNING feedback_id",
+            (req.client_id, req.item_id, req.occasion, req.action, req.score, req.model_version),
+        )
+        fid = cur.fetchone()[0]
+        conn.commit()
+    FEEDBACK_COUNTER.labels(action=req.action).inc()
+    return FeedbackResponse(feedback_id=fid, status="recorded")
