@@ -4,3 +4,6 @@ sources:
     schema: signals
     tables:
       - name: stream_transactions
+      - name: hm_transactions
+      - name: hm_articles
+      - name: hm_customers

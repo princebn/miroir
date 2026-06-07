@@ -30,7 +30,7 @@ with DAG(
     )
     dbt_build = BashOperator(
         task_id="dbt_build",
-        bash_command=f"cd {DBTDIR} && DBT_PROFILES_DIR={DBTDIR} {DBT} build",
+        bash_command=f"cd {DBTDIR} && DBT_PROFILES_DIR={DBTDIR} {DBT} build --exclude tag:reference",
     )
     quality = BashOperator(
         task_id="quality",
