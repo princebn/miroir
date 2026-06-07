@@ -22,7 +22,7 @@ PG_PORT = int(os.environ.get("MIROIR_PG_PORT", "5432"))
 PG_DB = os.environ.get("MIROIR_PG_DB", "miroir")
 PG_USER = os.environ.get("MIROIR_PG_USER", "miroir")
 PG_PASSWORD = os.environ.get("MIROIR_PG_PASSWORD", "miroir_local_pwd")
-CATALOG_TABLE = os.environ.get("MIROIR_CATALOG_TABLE", "catalog.items")
+CATALOG_TABLE = os.environ.get("MIROIR_CATALOG_TABLE", "catalog.item_embeddings")
 
 
 def _pg():
@@ -46,8 +46,12 @@ def retrieve_candidates(
     ]
     anchor_str = _vector_literal(anchor)
     sql = f"""
-    SELECT item_id, article_type, base_colour, usage, gender, season, image_url,
-           (embedding <=> %s::vector) AS cosine_distance
+    SELECT
+      item_id, master_category, sub_category, article_type,
+      base_colour, season, usage, gender,
+      image_path AS image_url,
+      product_display_name,
+      (embedding <=> %s::vector) AS cosine_distance
     FROM {CATALOG_TABLE}
     WHERE gender = ANY(%s) AND usage = ANY(%s) AND embedding IS NOT NULL
     ORDER BY embedding <=> %s::vector

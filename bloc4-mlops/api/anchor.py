@@ -10,18 +10,18 @@ _clip_tokenizer = None
 
 
 SAISON_TO_DESCRIPTOR = {
-    "printemps_clair": "soft pastel",
-    "printemps_chaud": "warm",
-    "printemps_vif": "vibrant warm",
-    "ete_clair": "soft cool pastel",
+    "printemps_clair": "soft warm pastel",
+    "printemps_chaud": "warm clear",
+    "printemps_lumineux": "vibrant warm",
     "ete_doux": "muted cool",
     "ete_froid": "cool clear",
-    "automne_doux": "muted warm earthy",
+    "ete_lumineux": "soft cool pastel",
     "automne_chaud": "rich warm earthy",
     "automne_profond": "deep warm",
-    "hiver_clair": "icy cool",
+    "automne_doux": "muted warm earthy",
     "hiver_froid": "bold cool",
     "hiver_profond": "deep cool",
+    "hiver_lumineux": "icy cool",
 }
 
 OCCASION_TO_DESCRIPTOR = {
@@ -34,12 +34,12 @@ OCCASION_TO_DESCRIPTOR = {
 }
 
 ARCHETYPE_TO_DESCRIPTOR = {
-    "classic": "classic timeless",
-    "romantic": "romantic feminine",
-    "edgy": "edgy bold",
-    "bohemian": "bohemian eclectic",
-    "minimalist": "minimalist clean",
-    "sporty": "sporty athletic",
+    "classique": "classic timeless",
+    "naturel": "natural relaxed",
+    "romantique": "romantic feminine",
+    "dramatique": "dramatic bold",
+    "creatif": "creative eclectic",
+    "elegant_chic": "elegant chic",
 }
 
 
@@ -57,8 +57,8 @@ def _ensure_clip_loaded():
 def build_query(occasion: str, saison: str, archetypes: List[str]) -> str:
     occ_desc = OCCASION_TO_DESCRIPTOR.get(occasion, occasion)
     sai_desc = SAISON_TO_DESCRIPTOR.get(saison, saison)
-    arch = archetypes[0] if archetypes else "classic"
-    arch_desc = ARCHETYPE_TO_DESCRIPTOR.get(arch, "classic")
+    arch = archetypes[0] if archetypes else "classique"
+    arch_desc = ARCHETYPE_TO_DESCRIPTOR.get(arch, "classic timeless")
     return f"{occ_desc} outfit in {sai_desc} tones, {arch_desc} style"
 
 

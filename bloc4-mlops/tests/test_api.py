@@ -25,19 +25,18 @@ def _fake_retrieve(anchor, occasion, n_candidates=200, gender_allowed=("Women", 
 def _fake_profile(client_id):
     return {
         "client_id": client_id,
-        "morphologie": "X",
+        "morphologie": "sablier",
         "saison_colorimetrique": "automne_doux",
-        "archetypes_style": ["classic"],
-        "budget_tranche": "premium",
+        "archetypes": ["classique"],
+        "budget_tranche": "milieu_haut",
         "taille": "M",
-        "occasions_preferees": ["bureau"],
+        "occasions": ["bureau"],
     }
 
 
 class _FakeModel:
     def predict(self, X):
-        n = len(X)
-        return np.linspace(1.0, 0.0, num=n)
+        return np.linspace(1.0, 0.0, num=len(X))
 
 
 def _fake_features(profile, candidates, occasion):
