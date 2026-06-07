@@ -38,17 +38,25 @@ INTERACTIONS_PATH = Path(__file__).resolve().parents[2] / "data" / "synthetic" /
 
 
 def load_catalog_metadata() -> pd.DataFrame:
-    """Charge la métadonnée des articles depuis Postgres (sans le vecteur)."""
-    conn = get_conn(register_pgvector=False)
-    sql = """
-        SELECT
-            item_id, gender, master_category, sub_category,
-            article_type, base_colour, season, usage, product_display_name
-        FROM catalog.item_embeddings
+    """Charge la métadonnée des articles depuis Postgres (sans le vecteur).
+
+    Utilise un curseur psycopg2 + DataFrame plutôt que pd.read_sql pour éviter
+    le warning d'incompatibilité SQLAlchemy.
     """
-    df = pd.read_sql(sql, conn)
-    conn.close()
-    return df
+    conn = get_conn(register_pgvector=False)
+    try:
+        with conn.cursor() as cur:
+            cur.execute("""
+                SELECT
+                    item_id, gender, master_category, sub_category,
+                    article_type, base_colour, season, usage, product_display_name
+                FROM catalog.item_embeddings
+            """)
+            rows = cur.fetchall()
+            cols = [d[0] for d in cur.description]
+    finally:
+        conn.close()
+    return pd.DataFrame(rows, columns=cols)
 
 
 def filter_for_women(catalog: pd.DataFrame) -> pd.DataFrame:
