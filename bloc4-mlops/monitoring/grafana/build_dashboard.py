@@ -28,8 +28,8 @@ err = (
 )
 
 
-def tgt(r, e, l):
-    return {"refId": r, "expr": e, "legendFormat": l, "datasource": DS}
+def tgt(r, e, legend):
+    return {"refId": r, "expr": e, "legendFormat": legend, "datasource": DS}
 
 
 def panel(i, t, x, y, w, h, targets, unit, ptype):

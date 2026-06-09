@@ -30,7 +30,7 @@ def get_model_version() -> Optional[str]:
         mlflow.set_tracking_uri(tracking_uri)
         client = MlflowClient()
         mv = client.get_model_version_by_alias(MODEL_NAME, ALIAS)
-        return mv.version
+        return str(mv.version)
     except Exception:
         model_uri = os.environ.get("MIROIR_RERANKER_URI", DEFAULT_MODEL_URI)
         if "@" in model_uri:
