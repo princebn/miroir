@@ -17,5 +17,5 @@ evidently
 pytest
 pytest-cov
 ruff==0.15.16
-black==26.5.1
+black==24.4.2
 prometheus-fastapi-instrumentator
