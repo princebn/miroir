@@ -13,6 +13,7 @@ Construit le dataset d'entraînement du re-ranker.
 Usage :
     python -m src.reranker.prepare
 """
+
 from __future__ import annotations
 
 from pathlib import Path
@@ -41,11 +42,13 @@ def load_catalog_metadata() -> pd.DataFrame:
     conn = get_conn(register_pgvector=False)
     try:
         with conn.cursor() as cur:
-            cur.execute("""
+            cur.execute(
+                """
                 SELECT item_id, master_category, sub_category, article_type,
                        base_colour, season, usage
                 FROM catalog.item_embeddings
-            """)
+            """
+            )
             rows = cur.fetchall()
             cols = [d[0] for d in cur.description]
     finally:
@@ -63,11 +66,15 @@ def save_split(X: pd.DataFrame, y: pd.Series, groups: pd.Series, path: Path) -> 
 
 def main() -> None:
     if not PROFILES_PATH.exists():
-        raise SystemExit(f"Profils introuvables : {PROFILES_PATH}\n"
-                         "Lance d'abord : python -m src.synth.generate_profiles")
+        raise SystemExit(
+            f"Profils introuvables : {PROFILES_PATH}\n"
+            "Lance d'abord : python -m src.synth.generate_profiles"
+        )
     if not INTERACTIONS_PATH.exists():
-        raise SystemExit(f"Interactions introuvables : {INTERACTIONS_PATH}\n"
-                         "Lance d'abord : python -m src.synth.generate_interactions")
+        raise SystemExit(
+            f"Interactions introuvables : {INTERACTIONS_PATH}\n"
+            "Lance d'abord : python -m src.synth.generate_interactions"
+        )
 
     print("Chargement profils, interactions, catalogue…")
     profiles = pd.read_parquet(PROFILES_PATH)
@@ -86,12 +93,18 @@ def main() -> None:
     (X_tr, y_tr, g_tr), (X_vl, y_vl, g_vl), (X_te, y_te, g_te) = group_split(
         X, y, groups, val_frac=0.10, test_frac=0.10, seed=42
     )
-    print(f"  Train : {len(X_tr):,} interactions, {g_tr.nunique():,} clientes, "
-          f"approbation {y_tr.mean():.1%}")
-    print(f"  Val   : {len(X_vl):,} interactions, {g_vl.nunique():,} clientes, "
-          f"approbation {y_vl.mean():.1%}")
-    print(f"  Test  : {len(X_te):,} interactions, {g_te.nunique():,} clientes, "
-          f"approbation {y_te.mean():.1%}")
+    print(
+        f"  Train : {len(X_tr):,} interactions, {g_tr.nunique():,} clientes, "
+        f"approbation {y_tr.mean():.1%}"
+    )
+    print(
+        f"  Val   : {len(X_vl):,} interactions, {g_vl.nunique():,} clientes, "
+        f"approbation {y_vl.mean():.1%}"
+    )
+    print(
+        f"  Test  : {len(X_te):,} interactions, {g_te.nunique():,} clientes, "
+        f"approbation {y_te.mean():.1%}"
+    )
 
     print("Écriture des parquets…")
     save_split(X_tr, y_tr, g_tr, OUT_TRAIN)

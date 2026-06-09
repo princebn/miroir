@@ -16,6 +16,7 @@ Usage:
     python -m src.synth.generate_interactions
     python src/synth/generate_interactions.py --per-client 30 --seed 42
 """
+
 from __future__ import annotations
 
 import argparse
@@ -32,9 +33,10 @@ from src.synth.compatibility import (
     combined_score,
 )
 
-
 PROFILES_PATH = Path(__file__).resolve().parents[2] / "data" / "synthetic" / "profiles.parquet"
-INTERACTIONS_PATH = Path(__file__).resolve().parents[2] / "data" / "synthetic" / "interactions.parquet"
+INTERACTIONS_PATH = (
+    Path(__file__).resolve().parents[2] / "data" / "synthetic" / "interactions.parquet"
+)
 
 
 def load_catalog_metadata() -> pd.DataFrame:
@@ -46,12 +48,14 @@ def load_catalog_metadata() -> pd.DataFrame:
     conn = get_conn(register_pgvector=False)
     try:
         with conn.cursor() as cur:
-            cur.execute("""
+            cur.execute(
+                """
                 SELECT
                     item_id, gender, master_category, sub_category,
                     article_type, base_colour, season, usage, product_display_name
                 FROM catalog.item_embeddings
-            """)
+            """
+            )
             rows = cur.fetchall()
             cols = [d[0] for d in cur.description]
     finally:
@@ -111,17 +115,19 @@ def generate_interactions(
             if rng.random() < LABEL_FLIP_PROB:
                 base_label = 1 - base_label
 
-            rows.append({
-                "interaction_id": _new_uuid(rng),
-                "client_id": profile["client_id"],
-                "item_id": item["item_id"],
-                "occasion": occasion,
-                "label": base_label,
-                "color_score": round(cs, 3),
-                "occasion_score": round(os_, 3),
-                "archetype_score": round(as_, 3),
-                "combined_score": round(comb, 3),
-            })
+            rows.append(
+                {
+                    "interaction_id": _new_uuid(rng),
+                    "client_id": profile["client_id"],
+                    "item_id": item["item_id"],
+                    "occasion": occasion,
+                    "label": base_label,
+                    "color_score": round(cs, 3),
+                    "occasion_score": round(os_, 3),
+                    "archetype_score": round(as_, 3),
+                    "combined_score": round(comb, 3),
+                }
+            )
 
     return pd.DataFrame(rows)
 
@@ -143,7 +149,9 @@ def main(per_client: int = 30, seed: int = 42) -> None:
     if len(catalog) < per_client:
         raise SystemExit(f"Catalogue trop petit ({len(catalog)}) pour échantillonner {per_client}")
 
-    print(f"Génération de {len(profiles)} × {per_client} = {len(profiles) * per_client:,} interactions…")
+    print(
+        f"Génération de {len(profiles)} × {per_client} = {len(profiles) * per_client:,} interactions…"
+    )
     df = generate_interactions(profiles, catalog, per_client=per_client, seed=seed)
 
     INTERACTIONS_PATH.parent.mkdir(parents=True, exist_ok=True)

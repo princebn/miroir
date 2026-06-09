@@ -4,6 +4,7 @@ tests/test_generate_profiles.py
 Tests unitaires du générateur de profils synthétiques.
 Vérifient la reproductibilité, les volumes, et la cohérence avec la spec.
 """
+
 from __future__ import annotations
 
 import pandas as pd
@@ -83,11 +84,14 @@ def test_no_duplicate_in_multi_labels():
     assert df.occasions.apply(lambda lst: len(set(lst)) == len(lst)).all()
 
 
-@pytest.mark.parametrize("col,vocab", [
-    ("morphologie", MORPHOLOGIES),
-    ("budget_tranche", BUDGETS),
-    ("taille", TAILLES),
-])
+@pytest.mark.parametrize(
+    "col,vocab",
+    [
+        ("morphologie", MORPHOLOGIES),
+        ("budget_tranche", BUDGETS),
+        ("taille", TAILLES),
+    ],
+)
 def test_distribution_approximates_spec(col, vocab):
     """Avec un échantillon de 5000, la distribution observée approche la spec à ±5pt."""
     df = generate_profiles(n_consultantes=100, clients_per_consultante=50, seed=42)

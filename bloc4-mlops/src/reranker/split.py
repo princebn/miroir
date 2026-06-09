@@ -8,6 +8,7 @@ fuite. Un modèle qui apprend les préférences spécifiques d'une cliente vue
 à la fois en train et en eval donnerait une métrique gonflée mais sans
 valeur en production où chaque cliente est nouvelle pour le modèle.
 """
+
 from __future__ import annotations
 
 import numpy as np
@@ -47,8 +48,8 @@ def group_split(
     n_val = int(n_total * val_frac)
 
     test_clients = set(unique_clients[:n_test])
-    val_clients = set(unique_clients[n_test:n_test + n_val])
-    train_clients = set(unique_clients[n_test + n_val:])
+    val_clients = set(unique_clients[n_test : n_test + n_val])
+    train_clients = set(unique_clients[n_test + n_val :])
 
     def _slice(mask: pd.Series) -> SplitTriplet:
         return (

@@ -1,4 +1,5 @@
 """Pydantic schemas for the Miroir recommendation API."""
+
 from typing import List, Literal, Optional
 
 from pydantic import BaseModel, Field

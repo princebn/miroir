@@ -14,6 +14,7 @@ Deux familles :
 
 Pour le ranking, on exclut les groupes sans positif (recall mal défini).
 """
+
 from __future__ import annotations
 
 import numpy as np

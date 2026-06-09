@@ -5,15 +5,20 @@ Tests du feature engineering et du split du re-ranker.
 Vérifient : sanity des encodages, absence de leakage, reproductibilité,
 pas de chevauchement de clientes entre splits.
 """
+
 from __future__ import annotations
 
 import pandas as pd
-import pytest
 
 from src.reranker.features import (
-    ARCHETYPES, BUDGETS, ITEM_CATEGORICAL_COLS, MORPHOLOGIES,
-    OCCASIONS, SAISONS, TAILLES,
-    build_features, encode_occasion, encode_profile_features,
+    BUDGETS,
+    ITEM_CATEGORICAL_COLS,
+    MORPHOLOGIES,
+    SAISONS,
+    TAILLES,
+    build_features,
+    encode_occasion,
+    encode_profile_features,
 )
 from src.reranker.split import group_split
 
@@ -31,53 +36,61 @@ def _profile_row(**overrides) -> pd.Series:
 
 
 def _mini_profiles(n: int = 4) -> pd.DataFrame:
-    return pd.DataFrame({
-        "client_id": [f"c{i:03d}" for i in range(n)],
-        "consultante_id": ["k1"] * n,
-        "morphologie": (["sablier", "rectangle", "triangle", "ovale"] * (n // 4 + 1))[:n],
-        "saison_colorimetrique": (
-            ["printemps_clair", "hiver_froid", "automne_chaud", "ete_doux"] * (n // 4 + 1)
-        )[:n],
-        "archetypes": (
-            [["naturel"], ["classique", "elegant_chic"], ["romantique"], ["dramatique"]]
-            * (n // 4 + 1)
-        )[:n],
-        "budget_tranche": (["milieu_bas", "milieu_haut", "premium", "bas"] * (n // 4 + 1))[:n],
-        "occasions": [["bureau"]] * n,
-        "taille": (["M", "L", "S", "XS"] * (n // 4 + 1))[:n],
-    })
+    return pd.DataFrame(
+        {
+            "client_id": [f"c{i:03d}" for i in range(n)],
+            "consultante_id": ["k1"] * n,
+            "morphologie": (["sablier", "rectangle", "triangle", "ovale"] * (n // 4 + 1))[:n],
+            "saison_colorimetrique": (
+                ["printemps_clair", "hiver_froid", "automne_chaud", "ete_doux"] * (n // 4 + 1)
+            )[:n],
+            "archetypes": (
+                [["naturel"], ["classique", "elegant_chic"], ["romantique"], ["dramatique"]]
+                * (n // 4 + 1)
+            )[:n],
+            "budget_tranche": (["milieu_bas", "milieu_haut", "premium", "bas"] * (n // 4 + 1))[:n],
+            "occasions": [["bureau"]] * n,
+            "taille": (["M", "L", "S", "XS"] * (n // 4 + 1))[:n],
+        }
+    )
 
 
 def _mini_catalog(n: int = 10) -> pd.DataFrame:
-    return pd.DataFrame({
-        "item_id": [f"it{i:03d}" for i in range(n)],
-        "master_category": ["Apparel"] * n,
-        "sub_category": ["Topwear"] * (n // 2) + ["Bottomwear"] * (n - n // 2),
-        "article_type": ["Tshirts"] * (n // 2) + ["Jeans"] * (n - n // 2),
-        "base_colour": (["Blue", "Red", "Black"] * (n // 3 + 1))[:n],
-        "season": ["Summer"] * n,
-        "usage": ["Casual"] * n,
-    })
+    return pd.DataFrame(
+        {
+            "item_id": [f"it{i:03d}" for i in range(n)],
+            "master_category": ["Apparel"] * n,
+            "sub_category": ["Topwear"] * (n // 2) + ["Bottomwear"] * (n - n // 2),
+            "article_type": ["Tshirts"] * (n // 2) + ["Jeans"] * (n - n // 2),
+            "base_colour": (["Blue", "Red", "Black"] * (n // 3 + 1))[:n],
+            "season": ["Summer"] * n,
+            "usage": ["Casual"] * n,
+        }
+    )
 
 
-def _mini_interactions(profiles: pd.DataFrame, catalog: pd.DataFrame,
-                       n_per_client: int = 5) -> pd.DataFrame:
+def _mini_interactions(
+    profiles: pd.DataFrame, catalog: pd.DataFrame, n_per_client: int = 5
+) -> pd.DataFrame:
     rows = []
     for _, prof in profiles.iterrows():
         for j in range(n_per_client):
-            rows.append({
-                "interaction_id": f"i_{prof['client_id']}_{j}",
-                "client_id": prof["client_id"],
-                "item_id": catalog.iloc[j]["item_id"],
-                "occasion": prof["occasions"][0],
-                "label": j % 2,
-            })
+            rows.append(
+                {
+                    "interaction_id": f"i_{prof['client_id']}_{j}",
+                    "client_id": prof["client_id"],
+                    "item_id": catalog.iloc[j]["item_id"],
+                    "occasion": prof["occasions"][0],
+                    "label": j % 2,
+                }
+            )
     return pd.DataFrame(rows)
 
 
 # ============================================================================
 # Encodages unitaires
 # ============================================================================
+
 
 def test_profile_morphology_onehot():
     feats = encode_profile_features(_profile_row(morphologie="sablier"))
@@ -121,6 +134,7 @@ def test_occasion_onehot_sums_to_one():
 # ============================================================================
 # build_features — vectorisé
 # ============================================================================
+
 
 def test_build_features_shape_matches_interactions():
     profiles = _mini_profiles()
@@ -187,6 +201,7 @@ def test_build_features_no_score_leakage():
 # ============================================================================
 # Split
 # ============================================================================
+
 
 def test_group_split_no_client_overlap():
     profiles = _mini_profiles(n=20)

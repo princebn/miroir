@@ -17,6 +17,7 @@ Conventions :
 Aucune colonne des scores intermédiaires (color_score, etc.) ne doit
 apparaître dans X : ce serait de la fuite (le label est dérivé d'eux).
 """
+
 from __future__ import annotations
 
 import pandas as pd
@@ -28,10 +29,18 @@ import pandas as pd
 MORPHOLOGIES = ["sablier", "rectangle", "triangle", "triangle_inverse", "ovale"]
 
 SAISONS = [
-    "printemps_clair", "printemps_chaud", "printemps_lumineux",
-    "ete_doux", "ete_froid", "ete_lumineux",
-    "automne_chaud", "automne_profond", "automne_doux",
-    "hiver_froid", "hiver_profond", "hiver_lumineux",
+    "printemps_clair",
+    "printemps_chaud",
+    "printemps_lumineux",
+    "ete_doux",
+    "ete_froid",
+    "ete_lumineux",
+    "automne_chaud",
+    "automne_profond",
+    "automne_doux",
+    "hiver_froid",
+    "hiver_profond",
+    "hiver_lumineux",
 ]
 
 ARCHETYPES = ["classique", "naturel", "romantique", "dramatique", "creatif", "elegant_chic"]
@@ -40,8 +49,12 @@ OCCASIONS = ["bureau", "cocktail", "vacances", "sport", "soiree", "casual"]
 TAILLES = ["XS", "S", "M", "L", "XL"]
 
 ITEM_CATEGORICAL_COLS = [
-    "item_master_category", "item_sub_category", "item_article_type",
-    "item_base_colour", "item_season", "item_usage",
+    "item_master_category",
+    "item_sub_category",
+    "item_article_type",
+    "item_base_colour",
+    "item_season",
+    "item_usage",
 ]
 
 _BUDGET_ORD = {b: i for i, b in enumerate(BUDGETS)}
@@ -51,6 +64,7 @@ _TAILLE_ORD = {t: i for i, t in enumerate(TAILLES)}
 # ============================================================================
 # Encodages unitaires (utilisés en tests, et conservés comme spec lisible)
 # ============================================================================
+
 
 def encode_profile_features(profile_row: pd.Series) -> dict[str, float]:
     """One-hot / multi-hot / ordinal d'un profil cliente unique."""
@@ -76,6 +90,7 @@ def encode_occasion(occasion: str) -> dict[str, float]:
 # Build vectorisé (production : 45 000 interactions en <1 s)
 # ============================================================================
 
+
 def build_features(
     interactions: pd.DataFrame,
     profiles: pd.DataFrame,
@@ -95,19 +110,36 @@ def build_features(
         y      : labels (interactions,)
         groups : client_id par row (pour le split)
     """
-    needed_prof = ["client_id", "morphologie", "saison_colorimetrique",
-                   "archetypes", "budget_tranche", "taille"]
+    needed_prof = [
+        "client_id",
+        "morphologie",
+        "saison_colorimetrique",
+        "archetypes",
+        "budget_tranche",
+        "taille",
+    ]
     prof_slim = profiles[needed_prof]
 
-    cat_slim = catalog[["item_id", "master_category", "sub_category", "article_type",
-                        "base_colour", "season", "usage"]].rename(columns={
-        "master_category": "item_master_category",
-        "sub_category":    "item_sub_category",
-        "article_type":    "item_article_type",
-        "base_colour":     "item_base_colour",
-        "season":          "item_season",
-        "usage":           "item_usage",
-    })
+    cat_slim = catalog[
+        [
+            "item_id",
+            "master_category",
+            "sub_category",
+            "article_type",
+            "base_colour",
+            "season",
+            "usage",
+        ]
+    ].rename(
+        columns={
+            "master_category": "item_master_category",
+            "sub_category": "item_sub_category",
+            "article_type": "item_article_type",
+            "base_colour": "item_base_colour",
+            "season": "item_season",
+            "usage": "item_usage",
+        }
+    )
 
     # On ne prend QUE les colonnes nécessaires des interactions, jamais les scores.
     inter_slim = interactions[["client_id", "item_id", "occasion", "label"]]

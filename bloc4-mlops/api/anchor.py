@@ -1,4 +1,5 @@
 """Style anchor: build a CLIP text embedding from a client's profile + occasion."""
+
 from __future__ import annotations
 
 from typing import List
@@ -47,8 +48,11 @@ def _ensure_clip_loaded():
     global _clip_model, _clip_tokenizer
     if _clip_model is None:
         import open_clip
+
         _clip_model, _, _ = open_clip.create_model_and_transforms(
-            "ViT-B-32", pretrained="openai", force_quick_gelu=True,
+            "ViT-B-32",
+            pretrained="openai",
+            force_quick_gelu=True,
         )
         _clip_model.eval()
         _clip_tokenizer = open_clip.get_tokenizer("ViT-B-32")
@@ -64,6 +68,7 @@ def build_query(occasion: str, saison: str, archetypes: List[str]) -> str:
 
 def encode_query(query: str) -> np.ndarray:
     import torch
+
     _ensure_clip_loaded()
     with torch.no_grad():
         tokens = _clip_tokenizer([query])

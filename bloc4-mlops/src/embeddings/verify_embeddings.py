@@ -9,6 +9,7 @@ Vérifie l'état de la table catalog.item_embeddings après ingestion :
 Usage:
     python src/embeddings/verify_embeddings.py
 """
+
 from __future__ import annotations
 
 from src.common.db import get_conn
@@ -28,33 +29,38 @@ def main() -> None:
             return
 
         # 2. Répartition par master_category
-        cur.execute("""
+        cur.execute(
+            """
             SELECT COALESCE(master_category, '(null)'), COUNT(*)
             FROM catalog.item_embeddings
             GROUP BY master_category
             ORDER BY COUNT(*) DESC
             LIMIT 10
-        """)
+        """
+        )
         print("Top 10 master_category :")
         for cat, n in cur.fetchall():
             print(f"  {n:>6,}  {cat}")
         print()
 
         # 3. Exemple de recherche par similarité
-        cur.execute("""
+        cur.execute(
+            """
             SELECT item_id, embedding, product_display_name, master_category, base_colour
             FROM catalog.item_embeddings
             WHERE product_display_name IS NOT NULL
             ORDER BY random()
             LIMIT 1
-        """)
+        """
+        )
         seed_id, seed_emb, seed_name, seed_cat, seed_col = cur.fetchone()
         print(f"Seed : {seed_id}")
         print(f"  → {seed_name}  [{seed_cat} / {seed_col}]\n")
 
         # Cosine distance avec pgvector : <=>
         # Similarité cosine = 1 - distance
-        cur.execute("""
+        cur.execute(
+            """
             SELECT item_id,
                    product_display_name,
                    master_category,
@@ -64,7 +70,9 @@ def main() -> None:
             WHERE item_id != %s
             ORDER BY embedding <=> %s
             LIMIT 5
-        """, (seed_emb, seed_id, seed_emb))
+        """,
+            (seed_emb, seed_id, seed_emb),
+        )
 
         print("Top 5 voisins (similarité cosine) :")
         for iid, name, cat, col, sim in cur.fetchall():

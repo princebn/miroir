@@ -4,11 +4,11 @@ tests/test_interactions.py
 Tests des règles de compatibilité (compatibility.py) et du générateur
 d'interactions (generate_interactions.py).
 """
+
 from __future__ import annotations
 
 import numpy as np
 import pandas as pd
-import pytest
 
 from src.synth.compatibility import (
     APPROVAL_THRESHOLD,
@@ -22,17 +22,25 @@ from src.synth.compatibility import (
 )
 from src.synth.generate_interactions import generate_interactions
 
-
 # ============================================================================
 # Couverture des mappings
 # ============================================================================
 
+
 def test_all_12_saisons_have_palette():
     expected = {
-        "printemps_clair", "printemps_chaud", "printemps_lumineux",
-        "ete_doux", "ete_froid", "ete_lumineux",
-        "automne_chaud", "automne_profond", "automne_doux",
-        "hiver_froid", "hiver_profond", "hiver_lumineux",
+        "printemps_clair",
+        "printemps_chaud",
+        "printemps_lumineux",
+        "ete_doux",
+        "ete_froid",
+        "ete_lumineux",
+        "automne_chaud",
+        "automne_profond",
+        "automne_doux",
+        "hiver_froid",
+        "hiver_profond",
+        "hiver_lumineux",
     }
     assert set(SAISON_PALETTES.keys()) == expected
 
@@ -51,19 +59,30 @@ def test_each_saison_has_minimum_colors():
 
 def test_all_6_occasions_mapped():
     assert set(OCCASION_USAGES.keys()) == {
-        "bureau", "cocktail", "vacances", "sport", "soiree", "casual",
+        "bureau",
+        "cocktail",
+        "vacances",
+        "sport",
+        "soiree",
+        "casual",
     }
 
 
 def test_all_6_archetypes_mapped():
     assert set(ARCHETYPE_ARTICLE_TYPES.keys()) == {
-        "classique", "naturel", "romantique", "dramatique", "creatif", "elegant_chic",
+        "classique",
+        "naturel",
+        "romantique",
+        "dramatique",
+        "creatif",
+        "elegant_chic",
     }
 
 
 # ============================================================================
 # Scoring : sanity
 # ============================================================================
+
 
 def test_color_score_signature_is_one():
     """Une couleur tier 1 d'une saison donne 1.0."""
@@ -115,10 +134,15 @@ def test_archetype_score_no_match_falls_back():
 # Score combiné
 # ============================================================================
 
+
 def test_combined_score_bounds():
     cs, os_, as_, comb = combined_score(
-        color="Burgundy", usage="Sports", article_type="Boots",
-        saison="printemps_clair", occasion="bureau", archetypes=["naturel"],
+        color="Burgundy",
+        usage="Sports",
+        article_type="Boots",
+        saison="printemps_clair",
+        occasion="bureau",
+        archetypes=["naturel"],
     )
     assert 0.0 <= comb <= 1.0
     assert 0.0 <= cs <= 1.0 and 0.0 <= os_ <= 1.0 and 0.0 <= as_ <= 1.0
@@ -127,8 +151,12 @@ def test_combined_score_bounds():
 def test_combined_score_aligned_returns_high():
     """Article totalement aligné avec le profil → score haut."""
     cs, os_, as_, comb = combined_score(
-        color="Coral", usage="Sports", article_type="Sneakers",
-        saison="printemps_clair", occasion="sport", archetypes=["naturel"],
+        color="Coral",
+        usage="Sports",
+        article_type="Sneakers",
+        saison="printemps_clair",
+        occasion="sport",
+        archetypes=["naturel"],
     )
     assert comb >= APPROVAL_THRESHOLD
 
@@ -137,41 +165,65 @@ def test_combined_score_aligned_returns_high():
 # Générateur — sur un mini catalogue
 # ============================================================================
 
+
 def _make_mini_catalog() -> pd.DataFrame:
     """Catalogue jouet de 20 articles pour les tests."""
     rng = np.random.default_rng(0)
     n = 20
-    colors = ["Coral", "Black", "Navy Blue", "Burgundy", "Yellow", "Pink",
-              "White", "Brown", "Olive", "Grey"]
-    types  = ["Tshirts", "Dresses", "Sneakers", "Heels", "Jeans", "Boots", "Tunics"]
+    colors = [
+        "Coral",
+        "Black",
+        "Navy Blue",
+        "Burgundy",
+        "Yellow",
+        "Pink",
+        "White",
+        "Brown",
+        "Olive",
+        "Grey",
+    ]
+    types = ["Tshirts", "Dresses", "Sneakers", "Heels", "Jeans", "Boots", "Tunics"]
     usages = ["Casual", "Sports", "Formal", "Party", "Smart Casual"]
-    return pd.DataFrame({
-        "item_id": [f"it{i:03d}" for i in range(n)],
-        "gender": ["Women"] * n,
-        "master_category": ["Apparel"] * n,
-        "sub_category": ["Topwear"] * n,
-        "article_type": rng.choice(types, size=n),
-        "base_colour": rng.choice(colors, size=n),
-        "season": ["Summer"] * n,
-        "usage": rng.choice(usages, size=n),
-        "product_display_name": [f"Article {i}" for i in range(n)],
-    })
+    return pd.DataFrame(
+        {
+            "item_id": [f"it{i:03d}" for i in range(n)],
+            "gender": ["Women"] * n,
+            "master_category": ["Apparel"] * n,
+            "sub_category": ["Topwear"] * n,
+            "article_type": rng.choice(types, size=n),
+            "base_colour": rng.choice(colors, size=n),
+            "season": ["Summer"] * n,
+            "usage": rng.choice(usages, size=n),
+            "product_display_name": [f"Article {i}" for i in range(n)],
+        }
+    )
 
 
 def _make_mini_profiles(n: int = 5) -> pd.DataFrame:
-    return pd.DataFrame({
-        "client_id": [f"c{i:03d}" for i in range(n)],
-        "consultante_id": ["k1"] * n,
-        "morphologie": ["sablier"] * n,
-        "saison_colorimetrique": [
-            "printemps_clair", "hiver_froid", "automne_chaud",
-            "ete_doux", "printemps_lumineux"
-        ][:n],
-        "archetypes": [["naturel"], ["classique"], ["romantique"], ["elegant_chic"], ["creatif"]][:n],
-        "budget_tranche": ["milieu_bas"] * n,
-        "occasions": [["bureau", "casual"]] * n,
-        "taille": ["M"] * n,
-    })
+    return pd.DataFrame(
+        {
+            "client_id": [f"c{i:03d}" for i in range(n)],
+            "consultante_id": ["k1"] * n,
+            "morphologie": ["sablier"] * n,
+            "saison_colorimetrique": [
+                "printemps_clair",
+                "hiver_froid",
+                "automne_chaud",
+                "ete_doux",
+                "printemps_lumineux",
+            ][:n],
+            "archetypes": [
+                ["naturel"],
+                ["classique"],
+                ["romantique"],
+                ["elegant_chic"],
+                ["creatif"],
+            ][:n],
+            "budget_tranche": ["milieu_bas"] * n,
+            "occasions": [["bureau", "casual"]] * n,
+            "taille": ["M"] * n,
+        }
+    )
 
 
 def test_generator_reproducible():

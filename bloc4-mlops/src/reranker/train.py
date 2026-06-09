@@ -12,6 +12,7 @@ Pour visualiser après :
     mlflow ui --backend-store-uri sqlite:///bloc4-mlops/mlflow.db
     (puis ouvrir http://localhost:5000)
 """
+
 from __future__ import annotations
 
 import os
@@ -26,7 +27,6 @@ import pandas as pd
 from src.reranker.evaluate import evaluate_classification, evaluate_ranking
 from src.reranker.features import ITEM_CATEGORICAL_COLS, OCCASIONS
 
-
 DATA_DIR = Path(__file__).resolve().parents[2] / "data" / "synthetic"
 TRAIN_PATH = DATA_DIR / "train.parquet"
 VAL_PATH = DATA_DIR / "val.parquet"
@@ -40,16 +40,17 @@ REGISTERED_MODEL_NAME = "miroir_reranker"
 
 # Configurations comparées — variations modérées, faciles à interpréter
 CONFIGS: list[dict] = [
-    {"name": "baseline",      "learning_rate": 0.10, "num_leaves":  31, "min_child_samples": 20},
-    {"name": "deeper",        "learning_rate": 0.10, "num_leaves":  63, "min_child_samples": 20},
-    {"name": "slower",        "learning_rate": 0.05, "num_leaves":  31, "min_child_samples": 50},
-    {"name": "deeper_slower", "learning_rate": 0.05, "num_leaves":  63, "min_child_samples": 50},
+    {"name": "baseline", "learning_rate": 0.10, "num_leaves": 31, "min_child_samples": 20},
+    {"name": "deeper", "learning_rate": 0.10, "num_leaves": 63, "min_child_samples": 20},
+    {"name": "slower", "learning_rate": 0.05, "num_leaves": 31, "min_child_samples": 50},
+    {"name": "deeper_slower", "learning_rate": 0.05, "num_leaves": 63, "min_child_samples": 50},
 ]
 
 
 # ============================================================================
 # Helpers
 # ============================================================================
+
 
 def _load_split(path: Path) -> tuple[pd.DataFrame, pd.Series, pd.Series]:
     df = pd.read_parquet(path)
@@ -77,11 +78,13 @@ def _group_key(client_ids: pd.Series, occasions: np.ndarray) -> np.ndarray:
     return np.array([f"{c}|{o}" for c, o in zip(client_ids.values, occasions)])
 
 
-def _log_feature_importance_plot(model: lgb.LGBMClassifier, feature_names: list[str],
-                                  config_name: str) -> None:
+def _log_feature_importance_plot(
+    model: lgb.LGBMClassifier, feature_names: list[str], config_name: str
+) -> None:
     """Génère et logge un plot des 20 features les plus importantes."""
     try:
         import matplotlib
+
         matplotlib.use("Agg")
         import matplotlib.pyplot as plt
     except ImportError:
@@ -106,39 +109,45 @@ def _log_feature_importance_plot(model: lgb.LGBMClassifier, feature_names: list[
 # Train one config
 # ============================================================================
 
-def train_one(config: dict, X_tr, y_tr, g_tr, X_vl, y_vl, g_vl) -> tuple[lgb.LGBMClassifier, dict, str]:
+
+def train_one(
+    config: dict, X_tr, y_tr, g_tr, X_vl, y_vl, g_vl
+) -> tuple[lgb.LGBMClassifier, dict, str]:
     """Entraîne une config, log dans MLflow, retourne (modèle, métriques val, run_id)."""
     pos = int(y_tr.sum())
     neg = int(len(y_tr) - pos)
     scale_pos_weight = neg / max(pos, 1)
 
     params = {
-        "objective":          "binary",
-        "learning_rate":      config["learning_rate"],
-        "num_leaves":         config["num_leaves"],
-        "min_child_samples":  config["min_child_samples"],
-        "scale_pos_weight":   scale_pos_weight,
-        "n_estimators":       500,
-        "random_state":       42,
-        "verbose":            -1,
+        "objective": "binary",
+        "learning_rate": config["learning_rate"],
+        "num_leaves": config["num_leaves"],
+        "min_child_samples": config["min_child_samples"],
+        "scale_pos_weight": scale_pos_weight,
+        "n_estimators": 500,
+        "random_state": 42,
+        "verbose": -1,
     }
 
     with mlflow.start_run(run_name=config["name"]) as run:
-        mlflow.log_params({
-            **config,
-            "scale_pos_weight": round(scale_pos_weight, 3),
-            "n_estimators":     params["n_estimators"],
-            "train_rows":       len(X_tr),
-            "val_rows":         len(X_vl),
-            "n_features":       X_tr.shape[1],
-        })
+        mlflow.log_params(
+            {
+                **config,
+                "scale_pos_weight": round(scale_pos_weight, 3),
+                "n_estimators": params["n_estimators"],
+                "train_rows": len(X_tr),
+                "val_rows": len(X_vl),
+                "n_features": X_tr.shape[1],
+            }
+        )
 
         Xtr_p = _prepare_for_lightgbm(X_tr)
         Xvl_p = _prepare_for_lightgbm(X_vl)
 
         model = lgb.LGBMClassifier(**params)
         model.fit(
-            Xtr_p, y_tr,
+            Xtr_p,
+            y_tr,
             eval_set=[(Xvl_p, y_vl)],
             categorical_feature=ITEM_CATEGORICAL_COLS,
             callbacks=[lgb.early_stopping(30, verbose=False), lgb.log_evaluation(0)],
@@ -166,6 +175,7 @@ def train_one(config: dict, X_tr, y_tr, g_tr, X_vl, y_vl, g_vl) -> tuple[lgb.LGB
 # Main
 # ============================================================================
 
+
 def main() -> None:
     mlflow.set_tracking_uri(TRACKING_URI)
     mlflow.set_experiment(EXPERIMENT_NAME)
@@ -186,10 +196,12 @@ def main() -> None:
     for cfg in CONFIGS:
         print(f"\n=== Run : {cfg['name']} ===")
         model, metrics, run_id = train_one(cfg, X_tr, y_tr, g_tr, X_vl, y_vl, g_vl)
-        print(f"  AUC = {metrics['auc']:.4f}   "
-              f"AP = {metrics['average_precision']:.4f}   "
-              f"NDCG@5 = {metrics['ndcg_at_5']:.4f}   "
-              f"Recall@5 = {metrics['recall_at_5']:.4f}")
+        print(
+            f"  AUC = {metrics['auc']:.4f}   "
+            f"AP = {metrics['average_precision']:.4f}   "
+            f"NDCG@5 = {metrics['ndcg_at_5']:.4f}   "
+            f"Recall@5 = {metrics['recall_at_5']:.4f}"
+        )
         results.append((cfg["name"], model, metrics, run_id))
 
     # Sélection : meilleur val AUC
@@ -204,16 +216,22 @@ def main() -> None:
     gk_te = _group_key(g_te, occ_te)
     rank_te = evaluate_ranking(y_pred_te, y_te.to_numpy(), gk_te, ks=(1, 3, 5))
 
-    print(f"\nMétriques TEST :")
+    print("\nMétriques TEST :")
     print(f"  AUC          : {cls_te['auc']:.4f}")
     print(f"  AP (PR-AUC)  : {cls_te['average_precision']:.4f}")
     print(f"  F1 @ 0.5     : {cls_te['f1']:.4f}")
-    print(f"  NDCG@1 / @3 / @5 : "
-          f"{rank_te['ndcg_at_1']:.4f} / {rank_te['ndcg_at_3']:.4f} / {rank_te['ndcg_at_5']:.4f}")
-    print(f"  Recall@1 / @3 / @5 : "
-          f"{rank_te['recall_at_1']:.4f} / {rank_te['recall_at_3']:.4f} / {rank_te['recall_at_5']:.4f}")
-    print(f"  Groupes (cliente × occasion) : {int(rank_te['n_groups']):,} "
-          f"dont {int(rank_te['n_groups_with_positive']):,} avec au moins un positif")
+    print(
+        f"  NDCG@1 / @3 / @5 : "
+        f"{rank_te['ndcg_at_1']:.4f} / {rank_te['ndcg_at_3']:.4f} / {rank_te['ndcg_at_5']:.4f}"
+    )
+    print(
+        f"  Recall@1 / @3 / @5 : "
+        f"{rank_te['recall_at_1']:.4f} / {rank_te['recall_at_3']:.4f} / {rank_te['recall_at_5']:.4f}"
+    )
+    print(
+        f"  Groupes (cliente × occasion) : {int(rank_te['n_groups']):,} "
+        f"dont {int(rank_te['n_groups_with_positive']):,} avec au moins un positif"
+    )
 
     # Logging des métriques test sur la run gagnante
     with mlflow.start_run(run_id=best_run_id):

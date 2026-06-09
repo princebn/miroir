@@ -11,8 +11,8 @@ Trois axes scorés :
 
 Chaque score ∈ [0, 1]. Le score combiné est la moyenne pondérée des trois.
 """
-from __future__ import annotations
 
+from __future__ import annotations
 
 # ============================================================================
 # 1. Mapping COULEUR  ←→  SOUS-SAISON colorimétrique
@@ -29,14 +29,24 @@ SAISON_PALETTES: dict[str, tuple[set[str], set[str]]] = {
         {"Yellow", "Tan", "Nude", "Skin", "Mauve", "Turquoise Blue"},
     ),
     "printemps_chaud": (
-        {"Coral", "Peach", "Orange", "Yellow", "Mustard", "Tan", "Khaki", "Olive", "Beige", "Cream"},
+        {
+            "Coral",
+            "Peach",
+            "Orange",
+            "Yellow",
+            "Mustard",
+            "Tan",
+            "Khaki",
+            "Olive",
+            "Beige",
+            "Cream",
+        },
         {"Brown", "Rust", "Gold", "Bronze", "Green", "Red"},
     ),
     "printemps_lumineux": (
         {"Coral", "Pink", "Yellow", "Orange", "Turquoise Blue", "Red", "Magenta"},
         {"Navy Blue", "Green", "Purple", "Black", "White", "Gold", "Teal"},
     ),
-
     # SUMMER family (froid + doux)
     "ete_doux": (
         {"Rose", "Mauve", "Lavender", "Grey", "Mushroom Brown", "Beige", "Skin", "Steel"},
@@ -50,21 +60,28 @@ SAISON_PALETTES: dict[str, tuple[set[str], set[str]]] = {
         {"Pink", "Lavender", "Blue", "Off White", "Silver", "Cream", "Skin"},
         {"Sea Green", "Mauve", "Steel", "Beige"},
     ),
-
     # AUTUMN family (chaud + profond)
     "automne_chaud": (
         {"Rust", "Mustard", "Olive", "Coffee Brown", "Brown", "Bronze", "Copper", "Khaki", "Tan"},
         {"Burgundy", "Gold", "Beige", "Cream", "Maroon", "Red", "Green"},
     ),
     "automne_profond": (
-        {"Burgundy", "Maroon", "Coffee Brown", "Charcoal", "Olive", "Bronze", "Mushroom Brown", "Brown"},
+        {
+            "Burgundy",
+            "Maroon",
+            "Coffee Brown",
+            "Charcoal",
+            "Olive",
+            "Bronze",
+            "Mushroom Brown",
+            "Brown",
+        },
         {"Rust", "Mustard", "Black", "Navy Blue", "Green", "Purple"},
     ),
     "automne_doux": (
         {"Beige", "Tan", "Khaki", "Olive", "Mustard", "Mushroom Brown", "Mauve", "Cream"},
         {"Bronze", "Rust", "Skin", "Coffee Brown", "Steel", "Sea Green"},
     ),
-
     # WINTER family (froid + contrasté)
     "hiver_froid": (
         {"Red", "Pink", "Magenta", "Navy Blue", "Black", "White", "Charcoal", "Silver"},
@@ -100,12 +117,12 @@ def color_score(color: str | None, saison: str) -> float:
 # ============================================================================
 
 OCCASION_USAGES: dict[str, set[str]] = {
-    "bureau":   {"Formal", "Smart Casual"},
+    "bureau": {"Formal", "Smart Casual"},
     "cocktail": {"Party", "Formal", "Smart Casual"},
     "vacances": {"Casual", "Travel", "Ethnic"},
-    "sport":    {"Sports"},
-    "soiree":   {"Party", "Formal"},
-    "casual":   {"Casual", "Smart Casual"},
+    "sport": {"Sports"},
+    "soiree": {"Party", "Formal"},
+    "casual": {"Casual", "Smart Casual"},
 }
 
 
@@ -125,28 +142,70 @@ def occasion_score(usage: str | None, occasion: str) -> float:
 
 ARCHETYPE_ARTICLE_TYPES: dict[str, set[str]] = {
     "classique": {
-        "Shirts", "Trousers", "Formal Shoes", "Suits", "Blazers", "Ties",
-        "Watches", "Belts", "Wallets",
+        "Shirts",
+        "Trousers",
+        "Formal Shoes",
+        "Suits",
+        "Blazers",
+        "Ties",
+        "Watches",
+        "Belts",
+        "Wallets",
     },
     "naturel": {
-        "Tshirts", "Tops", "Jeans", "Casual Shoes", "Sneakers", "Shorts",
-        "Caps", "Backpacks", "Flip Flops",
+        "Tshirts",
+        "Tops",
+        "Jeans",
+        "Casual Shoes",
+        "Sneakers",
+        "Shorts",
+        "Caps",
+        "Backpacks",
+        "Flip Flops",
     },
     "romantique": {
-        "Dresses", "Tunics", "Kurtas", "Skirts", "Camisoles", "Sandals",
-        "Heels", "Earrings", "Bangle", "Perfume and Body Mist",
+        "Dresses",
+        "Tunics",
+        "Kurtas",
+        "Skirts",
+        "Camisoles",
+        "Sandals",
+        "Heels",
+        "Earrings",
+        "Bangle",
+        "Perfume and Body Mist",
     },
     "dramatique": {
-        "Jackets", "Coats", "Boots", "Heels", "Sunglasses", "Handbags",
-        "Stoles", "Scarves",
+        "Jackets",
+        "Coats",
+        "Boots",
+        "Heels",
+        "Sunglasses",
+        "Handbags",
+        "Stoles",
+        "Scarves",
     },
     "creatif": {
-        "Tshirts", "Sweatshirts", "Track Pants", "Sneakers", "Caps",
-        "Handbags", "Scarves", "Watches", "Bracelet",
+        "Tshirts",
+        "Sweatshirts",
+        "Track Pants",
+        "Sneakers",
+        "Caps",
+        "Handbags",
+        "Scarves",
+        "Watches",
+        "Bracelet",
     },
     "elegant_chic": {
-        "Dresses", "Heels", "Handbags", "Watches", "Sunglasses", "Earrings",
-        "Necklace and Chains", "Blazers", "Perfume and Body Mist",
+        "Dresses",
+        "Heels",
+        "Handbags",
+        "Watches",
+        "Sunglasses",
+        "Earrings",
+        "Necklace and Chains",
+        "Blazers",
+        "Perfume and Body Mist",
     },
 }
 

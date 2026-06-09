@@ -3,6 +3,7 @@ tests/test_evaluate.py
 
 Tests des métriques d'évaluation du re-ranker (evaluate.py).
 """
+
 from __future__ import annotations
 
 import numpy as np
@@ -15,10 +16,10 @@ from src.reranker.evaluate import (
     recall_at_k,
 )
 
-
 # ============================================================================
 # NDCG@K
 # ============================================================================
+
 
 def test_ndcg_perfect_ranking_is_one():
     """Tous les positifs en tête → NDCG = 1."""
@@ -53,6 +54,7 @@ def test_ndcg_at_k_truncates_correctly():
 # Recall@K
 # ============================================================================
 
+
 def test_recall_perfect():
     scores = np.array([0.9, 0.8, 0.7, 0.6, 0.5])
     labels = np.array([1, 1, 1, 0, 0])
@@ -84,11 +86,12 @@ def test_recall_partial_coverage():
 # evaluate_ranking — groupement
 # ============================================================================
 
+
 def test_evaluate_ranking_two_groups_both_perfect():
     """Deux groupes, chacun avec un ranking parfait → métriques = 1."""
-    y_pred = np.array([0.9, 0.5, 0.1,  0.1, 0.5, 0.9])
-    y_true = np.array([1,   0,   0,    0,   0,   1])
-    groups = np.array(["a", "a", "a",  "b", "b", "b"])
+    y_pred = np.array([0.9, 0.5, 0.1, 0.1, 0.5, 0.9])
+    y_true = np.array([1, 0, 0, 0, 0, 1])
+    groups = np.array(["a", "a", "a", "b", "b", "b"])
 
     m = evaluate_ranking(y_pred, y_true, groups, ks=(1, 3))
     assert m["ndcg_at_1"] == pytest.approx(1.0)
@@ -99,9 +102,9 @@ def test_evaluate_ranking_two_groups_both_perfect():
 
 def test_evaluate_ranking_excludes_no_positive_groups_from_recall_mean():
     """Un groupe sans positif est exclu du recall (mais compté dans n_groups)."""
-    y_pred = np.array([0.9, 0.5,  0.9, 0.5])
-    y_true = np.array([1,   0,    0,   0])
-    groups = np.array(["a", "a",  "b", "b"])
+    y_pred = np.array([0.9, 0.5, 0.9, 0.5])
+    y_true = np.array([1, 0, 0, 0])
+    groups = np.array(["a", "a", "b", "b"])
 
     m = evaluate_ranking(y_pred, y_true, groups, ks=(1,))
     # Seulement le groupe 'a' a un positif
@@ -114,6 +117,7 @@ def test_evaluate_ranking_excludes_no_positive_groups_from_recall_mean():
 # ============================================================================
 # evaluate_classification
 # ============================================================================
+
 
 def test_evaluate_classification_returns_expected_keys():
     y_pred = np.array([0.1, 0.4, 0.8, 0.9])

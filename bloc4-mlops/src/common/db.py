@@ -9,6 +9,7 @@ Usage:
     with get_conn() as conn:
         ...
 """
+
 from __future__ import annotations
 
 import os
@@ -16,12 +17,11 @@ import os
 import psycopg2
 from pgvector.psycopg2 import register_vector
 
-
 PG_DSN = {
-    "host":     os.environ.get("PGHOST", "localhost"),
-    "port":     os.environ.get("PGPORT", "5432"),
-    "dbname":   os.environ.get("PGDATABASE", "miroir"),
-    "user":     os.environ.get("PGUSER", "miroir"),
+    "host": os.environ.get("PGHOST", "localhost"),
+    "port": os.environ.get("PGPORT", "5432"),
+    "dbname": os.environ.get("PGDATABASE", "miroir"),
+    "user": os.environ.get("PGUSER", "miroir"),
     "password": os.environ.get("PGPASSWORD", "miroir_local_pwd"),
 }
 

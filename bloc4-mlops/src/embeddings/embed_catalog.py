@@ -17,6 +17,7 @@ Usage:
     # full run (~10-20 min sur M4 / MPS)
     python src/embeddings/embed_catalog.py
 """
+
 from __future__ import annotations
 
 import argparse
@@ -33,15 +34,16 @@ from tqdm import tqdm
 
 from src.common.db import get_conn
 
-
 # ============================================================================
 # Configuration
 # ============================================================================
 
-CATALOG_DIR = Path(os.environ.get(
-    "MIROIR_CATALOG_DIR",
-    "~/Downloads/archive fashion",
-)).expanduser()
+CATALOG_DIR = Path(
+    os.environ.get(
+        "MIROIR_CATALOG_DIR",
+        "~/Downloads/archive fashion",
+    )
+).expanduser()
 
 MODEL_NAME = "ViT-B-32"
 PRETRAINED = "openai"
@@ -87,6 +89,7 @@ ON CONFLICT (item_id) DO NOTHING
 # DB
 # ============================================================================
 
+
 def init_schema(conn) -> None:
     with conn.cursor() as cur:
         cur.execute(SCHEMA_SQL)
@@ -109,6 +112,7 @@ def insert_batch(conn, rows: list[tuple]) -> int:
 # ============================================================================
 # CLIP
 # ============================================================================
+
 
 def get_device() -> str:
     if torch.backends.mps.is_available():
@@ -139,6 +143,7 @@ def encode_images(paths: list[Path], model, preprocess, device: str) -> np.ndarr
 # Catalogue
 # ============================================================================
 
+
 def _opt(v):
     """Convertit NaN / None pour psycopg2."""
     if v is None:
@@ -158,9 +163,7 @@ def load_catalog() -> pd.DataFrame:
 
     df = pd.read_csv(csv_path, on_bad_lines="skip")
     df["item_id"] = df["id"].astype(str)
-    df["image_path"] = df["id"].astype(str).apply(
-        lambda i: CATALOG_DIR / "images" / f"{i}.jpg"
-    )
+    df["image_path"] = df["id"].astype(str).apply(lambda i: CATALOG_DIR / "images" / f"{i}.jpg")
 
     before = len(df)
     df = df[df["image_path"].apply(lambda p: p.exists())].reset_index(drop=True)
@@ -171,6 +174,7 @@ def load_catalog() -> pd.DataFrame:
 # ============================================================================
 # Main
 # ============================================================================
+
 
 def main(limit: int | None = None) -> None:
     print(f"Catalogue : {CATALOG_DIR}")
@@ -203,7 +207,7 @@ def main(limit: int | None = None) -> None:
 
     inserted = 0
     for i in tqdm(range(0, len(todo), BATCH_SIZE), desc="batches"):
-        batch = todo.iloc[i:i + BATCH_SIZE]
+        batch = todo.iloc[i : i + BATCH_SIZE]
 
         try:
             embs = encode_images(batch["image_path"].tolist(), model, preprocess, device)
@@ -213,19 +217,21 @@ def main(limit: int | None = None) -> None:
 
         rows = []
         for k, (_, row) in enumerate(batch.iterrows()):
-            rows.append((
-                str(row["item_id"]),
-                embs[k],
-                str(row["image_path"]),
-                _opt(row.get("gender")),
-                _opt(row.get("masterCategory")),
-                _opt(row.get("subCategory")),
-                _opt(row.get("articleType")),
-                _opt(row.get("baseColour")),
-                _opt(row.get("season")),
-                _opt(row.get("usage")),
-                _opt(row.get("productDisplayName")),
-            ))
+            rows.append(
+                (
+                    str(row["item_id"]),
+                    embs[k],
+                    str(row["image_path"]),
+                    _opt(row.get("gender")),
+                    _opt(row.get("masterCategory")),
+                    _opt(row.get("subCategory")),
+                    _opt(row.get("articleType")),
+                    _opt(row.get("baseColour")),
+                    _opt(row.get("season")),
+                    _opt(row.get("usage")),
+                    _opt(row.get("productDisplayName")),
+                )
+            )
         inserted += insert_batch(conn, rows)
 
     conn.close()

@@ -12,6 +12,7 @@ Usage:
     # ou
     cd bloc4-mlops && python src/synth/generate_profiles.py
 """
+
 from __future__ import annotations
 
 import uuid
@@ -29,10 +30,18 @@ MORPHOLOGIES = ["sablier", "rectangle", "triangle", "triangle_inverse", "ovale"]
 MORPHOLOGIE_WEIGHTS = [0.35, 0.25, 0.22, 0.10, 0.08]
 
 SAISONS = [
-    "printemps_clair", "printemps_chaud", "printemps_lumineux",
-    "ete_doux", "ete_froid", "ete_lumineux",
-    "automne_chaud", "automne_profond", "automne_doux",
-    "hiver_froid", "hiver_profond", "hiver_lumineux",
+    "printemps_clair",
+    "printemps_chaud",
+    "printemps_lumineux",
+    "ete_doux",
+    "ete_froid",
+    "ete_lumineux",
+    "automne_chaud",
+    "automne_profond",
+    "automne_doux",
+    "hiver_froid",
+    "hiver_profond",
+    "hiver_lumineux",
 ]
 SAISON_WEIGHTS = [1.0 / 12] * 12  # uniforme
 
@@ -52,6 +61,7 @@ TAILLE_WEIGHTS = [0.08, 0.25, 0.38, 0.22, 0.07]
 # ============================================================================
 # Helpers
 # ============================================================================
+
 
 def _sample_multi(
     rng: np.random.Generator,
@@ -73,6 +83,7 @@ def _new_uuid(rng: np.random.Generator) -> str:
 # ============================================================================
 # Génération
 # ============================================================================
+
 
 def generate_profiles(
     n_consultantes: int = 50,
@@ -96,16 +107,18 @@ def generate_profiles(
     rows = []
     for consultante_id in consultante_ids:
         for _ in range(clients_per_consultante):
-            rows.append({
-                "client_id": _new_uuid(rng),
-                "consultante_id": consultante_id,
-                "morphologie": str(rng.choice(MORPHOLOGIES, p=MORPHOLOGIE_WEIGHTS)),
-                "saison_colorimetrique": str(rng.choice(SAISONS, p=SAISON_WEIGHTS)),
-                "archetypes": _sample_multi(rng, ARCHETYPES, ARCHETYPE_COUNT_WEIGHTS),
-                "budget_tranche": str(rng.choice(BUDGETS, p=BUDGET_WEIGHTS)),
-                "occasions": _sample_multi(rng, OCCASIONS, OCCASION_COUNT_WEIGHTS),
-                "taille": str(rng.choice(TAILLES, p=TAILLE_WEIGHTS)),
-            })
+            rows.append(
+                {
+                    "client_id": _new_uuid(rng),
+                    "consultante_id": consultante_id,
+                    "morphologie": str(rng.choice(MORPHOLOGIES, p=MORPHOLOGIE_WEIGHTS)),
+                    "saison_colorimetrique": str(rng.choice(SAISONS, p=SAISON_WEIGHTS)),
+                    "archetypes": _sample_multi(rng, ARCHETYPES, ARCHETYPE_COUNT_WEIGHTS),
+                    "budget_tranche": str(rng.choice(BUDGETS, p=BUDGET_WEIGHTS)),
+                    "occasions": _sample_multi(rng, OCCASIONS, OCCASION_COUNT_WEIGHTS),
+                    "taille": str(rng.choice(TAILLES, p=TAILLE_WEIGHTS)),
+                }
+            )
 
     return pd.DataFrame(rows)
 
@@ -113,6 +126,7 @@ def generate_profiles(
 # ============================================================================
 # CLI
 # ============================================================================
+
 
 def main() -> None:
     df = generate_profiles()
@@ -127,11 +141,22 @@ def main() -> None:
     print()
     print("Distributions observées (vérifient la spec) :")
     print("  morphologie       :", df.morphologie.value_counts(normalize=True).round(3).to_dict())
-    print("  saison (10 prem.) :", dict(list(df.saison_colorimetrique.value_counts(normalize=True).round(3).items())[:10]))
-    print("  budget            :", df.budget_tranche.value_counts(normalize=True).round(3).to_dict())
+    print(
+        "  saison (10 prem.) :",
+        dict(list(df.saison_colorimetrique.value_counts(normalize=True).round(3).items())[:10]),
+    )
+    print(
+        "  budget            :", df.budget_tranche.value_counts(normalize=True).round(3).to_dict()
+    )
     print("  taille            :", df.taille.value_counts(normalize=True).round(3).to_dict())
-    print("  archétypes (n)    :", df.archetypes.apply(len).value_counts(normalize=True).round(3).to_dict())
-    print("  occasions  (n)    :", df.occasions.apply(len).value_counts(normalize=True).round(3).to_dict())
+    print(
+        "  archétypes (n)    :",
+        df.archetypes.apply(len).value_counts(normalize=True).round(3).to_dict(),
+    )
+    print(
+        "  occasions  (n)    :",
+        df.occasions.apply(len).value_counts(normalize=True).round(3).to_dict(),
+    )
 
 
 if __name__ == "__main__":

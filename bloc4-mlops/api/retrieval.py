@@ -1,4 +1,5 @@
 """Candidate retrieval via pgvector cosine similarity + hard filters."""
+
 from __future__ import annotations
 
 import os
@@ -27,7 +28,11 @@ CATALOG_TABLE = os.environ.get("MIROIR_CATALOG_TABLE", "catalog.item_embeddings"
 
 def _pg():
     return psycopg2.connect(
-        host=PG_HOST, port=PG_PORT, dbname=PG_DB, user=PG_USER, password=PG_PASSWORD,
+        host=PG_HOST,
+        port=PG_PORT,
+        dbname=PG_DB,
+        user=PG_USER,
+        password=PG_PASSWORD,
     )
 
 
@@ -42,7 +47,11 @@ def retrieve_candidates(
     gender_allowed: Iterable[str] = ("Women", "Unisex"),
 ) -> List[dict]:
     usages = OCCASION_TO_USAGES.get(occasion, []) or [
-        "Casual", "Formal", "Smart Casual", "Party", "Sports",
+        "Casual",
+        "Formal",
+        "Smart Casual",
+        "Party",
+        "Sports",
     ]
     anchor_str = _vector_literal(anchor)
     sql = f"""

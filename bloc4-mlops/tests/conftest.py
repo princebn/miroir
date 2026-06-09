@@ -3,6 +3,7 @@ tests/conftest.py
 
 Permet aux tests d'importer `src.*` depuis le dossier parent bloc4-mlops/.
 """
+
 import sys
 from pathlib import Path
 
