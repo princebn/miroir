@@ -1,4 +1,4 @@
-# Miroir Bloc 4 - DAG de reentrainement hebdo du re-ranker (garde-fous qualite + perf).
+# Miroir Bloc 4 - DAG de reentrainement hebdo du re-ranker (qualite + drift + promote/rollback).
 import os
 from datetime import datetime
 
@@ -12,7 +12,7 @@ B4 = ROOT + "/bloc4-mlops"
 
 with DAG(
     dag_id="miroir_reco_retrain",
-    description="Bloc 4 - reentrainement hebdo du re-ranker (qualite + promote/rollback)",
+    description="Bloc 4 - reentrainement hebdo (qualite + drift + promote/rollback)",
     start_date=datetime(2026, 1, 1),
     schedule="@weekly",
     catchup=False,
@@ -22,6 +22,10 @@ with DAG(
     regenerate = BashOperator(
         task_id="regenerate",
         bash_command=f"cd {B4} && {PY} -m src.synth.generate_interactions && {PY} -m src.reranker.prepare",
+    )
+    drift_check = BashOperator(
+        task_id="drift_check",
+        bash_command=f"cd {B4} && {PY} monitoring/evidently/drift_report.py",
     )
     quality_gate = BashOperator(
         task_id="quality_gate",
@@ -36,3 +40,4 @@ with DAG(
         bash_command=f"cd {B4} && {PY} retrain/evaluate_and_promote.py",
     )
     regenerate >> quality_gate >> train >> evaluate_promote
+    regenerate >> drift_check

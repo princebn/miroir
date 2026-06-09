@@ -13,7 +13,7 @@ mlflow
 fastapi
 uvicorn[standard]
 prometheus-client
-evidently
+evidently==0.7.21
 pytest
 pytest-cov
 ruff==0.15.16
