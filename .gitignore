@@ -27,6 +27,7 @@ __pycache__/
 # Bloc 4
 bloc4-mlops/models/*
 !bloc4-mlops/models/.gitkeep
+!bloc4-mlops/models/README.md
 bloc4-mlops/data/synthetic/*.csv
 bloc4-mlops/data/synthetic/*.parquet
 mlruns/
