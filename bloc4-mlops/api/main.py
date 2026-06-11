@@ -15,6 +15,7 @@ import pandas as pd
 from fastapi import FastAPI, HTTPException
 
 from api.anchor import style_anchor_for_client
+from api.demo_routes import router as demo_router
 from api.model import get_model_version, load_reranker
 from api.recommend import recommend as recommend_orchestrator
 from api.retrieval import retrieve_candidates
@@ -207,3 +208,6 @@ def feedback_endpoint(req: FeedbackRequest):
         conn.commit()
     FEEDBACK_COUNTER.labels(action=req.action).inc()
     return FeedbackResponse(feedback_id=fid, status="recorded")
+
+
+app.include_router(demo_router)
