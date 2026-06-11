@@ -1,12 +1,16 @@
 import { useEffect, useRef, useState } from "react";
 import Card from "./components/Card.jsx";
+import Planche from "./components/Planche.jsx";
 import {
   OCCASIONS,
   NOMS,
+  articleLabel,
+  couleurLabel,
   clientChips,
   initiales,
   prenom,
 } from "./labels.js";
+import "./seance.css";
 
 const CATALOGUE = "44 419";
 
@@ -15,14 +19,17 @@ export default function App() {
   const [clientIdx, setClientIdx] = useState(0);
   const [occasion, setOccasion] = useState("cocktail");
   const [items, setItems] = useState(null);
-  const [decisions, setDecisions] = useState({});
-  const reserveRef = useRef([]);
-  const excludeRef = useRef([]);
+  const [selection, setSelection] = useState([]);
+  const [vue, setVue] = useState("seance");
+  const [envoyee, setEnvoyee] = useState(false);
   const [chargement, setChargement] = useState(false);
   const [erreur, setErreur] = useState(null);
   const [version, setVersion] = useState("–");
   const [latence, setLatence] = useState(null);
-  const [composeePour, setComposeePour] = useState(null);
+  const reserveRef = useRef([]);
+  const excludeRef = useRef([]);
+  const seenRef = useRef(new Set());
+  const refillingRef = useRef(false);
 
   useEffect(() => {
     fetch("/api/clients")
@@ -37,6 +44,33 @@ export default function App() {
 
   const client = clients[clientIdx];
   const nom = NOMS[clientIdx % NOMS.length] || "Cliente";
+  const occasionLabel =
+    OCCASIONS.find((o) => o.id === occasion)?.label || occasion;
+
+  function resetSeance() {
+    setItems(null);
+    setSelection([]);
+    setEnvoyee(false);
+    setVue("seance");
+    reserveRef.current = [];
+    excludeRef.current = [];
+    seenRef.current = new Set();
+  }
+
+  async function appelRecommend(excludeList) {
+    const r = await fetch("/api/recommend", {
+      method: "POST",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify({
+        client_id: client.client_id,
+        occasion,
+        k: 20,
+        exclude_ids: excludeList,
+      }),
+    });
+    if (!r.ok) throw new Error(`HTTP ${r.status}`);
+    return (await r.json()).items;
+  }
 
   async function composer() {
     if (!client || chargement) return;
@@ -44,30 +78,31 @@ export default function App() {
     setErreur(null);
     const t0 = performance.now();
     try {
-      const r = await fetch("/api/recommend", {
-        method: "POST",
-        headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({
-          client_id: client.client_id,
-          occasion,
-          k: 20,
-          exclude_ids: excludeRef.current,
-        }),
-      });
-      if (!r.ok) throw new Error(`HTTP ${r.status}`);
-      const data = await r.json();
+      const recus = await appelRecommend(excludeRef.current);
       setLatence(Math.round(performance.now() - t0));
-      reserveRef.current = data.items.slice(5);
-      setItems(data.items.slice(0, 5));
-      setDecisions({});
-      setComposeePour({
-        prenom: prenom(nom),
-        occasion: OCCASIONS.find((o) => o.id === occasion)?.label || occasion,
-      });
+      recus.forEach((it) => seenRef.current.add(it.item_id));
+      reserveRef.current = recus.slice(5);
+      setItems(recus.slice(0, 5));
     } catch (e) {
       setErreur("La composition a échoué — vérifie que l'API répond.");
     } finally {
       setChargement(false);
+    }
+  }
+
+  async function recharger() {
+    if (refillingRef.current || !client) return;
+    if (reserveRef.current.length >= 3) return;
+    refillingRef.current = true;
+    try {
+      const recus = await appelRecommend([...seenRef.current]);
+      const nouveaux = recus.filter((it) => !seenRef.current.has(it.item_id));
+      nouveaux.forEach((it) => seenRef.current.add(it.item_id));
+      reserveRef.current = [...reserveRef.current, ...nouveaux];
+    } catch (e) {
+      /* recharge silencieuse */
+    } finally {
+      refillingRef.current = false;
     }
   }
 
@@ -85,12 +120,10 @@ export default function App() {
       }),
     }).catch(() => {});
 
-    if (action === "approved") {
-      setDecisions((d) => ({ ...d, [item.item_id]: "approved" }));
-      return;
-    }
-
     excludeRef.current = [...excludeRef.current, item.item_id];
+    if (action === "approved") {
+      setSelection((prev) => [...prev, item]);
+    }
     setItems((prev) => {
       const idx = prev.findIndex((x) => x.item_id === item.item_id);
       if (idx === -1) return prev;
@@ -103,6 +136,20 @@ export default function App() {
       }
       return next;
     });
+    recharger();
+  }
+
+  function changerCliente(idx) {
+    setClientIdx(idx);
+    resetSeance();
+  }
+
+  function changerOccasion(id) {
+    if (id === occasion) return;
+    setOccasion(id);
+    if (items !== null || selection.length > 0) {
+      resetSeance();
+    }
   }
 
   const dateSeance = new Date().toLocaleDateString("fr-FR", {
@@ -124,93 +171,154 @@ export default function App() {
         </div>
       </header>
 
-      <section className="barre-seance">
-        <div className="cliente">
-          <div className="avatar-cliente serif">{initiales(nom)}</div>
-          <div className="cliente-infos">
-            <label className="sr-only" htmlFor="select-cliente">
-              Choisir une cliente
-            </label>
-            <select
-              id="select-cliente"
-              className="cliente-select serif"
-              value={clientIdx}
-              onChange={(e) => {
-                setClientIdx(Number(e.target.value));
-                excludeRef.current = [];
-                reserveRef.current = [];
-                setItems(null);
-                setDecisions({});
-              }}
-            >
-              {clients.map((c, i) => (
-                <option key={c.client_id} value={i}>
-                  {NOMS[i % NOMS.length]}
-                </option>
-              ))}
-            </select>
-            <p className="cliente-chips">{clientChips(client)}</p>
-          </div>
-        </div>
-        <button
-          type="button"
-          className="cta"
-          onClick={composer}
-          disabled={!client || chargement}
-        >
-          {chargement ? "Composition…" : "Composer la sélection"}
-        </button>
-      </section>
-
-      <nav className="occasions" aria-label="Occasion">
-        {OCCASIONS.map((o) => (
-          <button
-            key={o.id}
-            type="button"
-            className={"pill" + (occasion === o.id ? " pill-active" : "")}
-            onClick={() => setOccasion(o.id)}
-          >
-            {o.label}
-          </button>
-        ))}
-      </nav>
-
-      <main className="contenu">
-        {erreur && <p className="message-erreur">{erreur}</p>}
-
-        {!items && !erreur && (
-          <div className="accueil">
-            <p className="accueil-titre serif">
-              Choisissez une cliente et une occasion —<br />
-              Miroir compose une sélection parmi {CATALOGUE} pièces, ordonnée
-              pour elle.
-            </p>
-            <p className="accueil-sous">
-              Chaque pièce gardée ou écartée affine les prochaines sélections.
-            </p>
-          </div>
-        )}
-
-        {items && (
-          <>
-            <p className="selection-titre serif">
-              La sélection — cinq pièces pour {composeePour?.prenom},{" "}
-              occasion {composeePour?.occasion.toLowerCase()}
-            </p>
-            <div className="grille">
-              {items.map((item, i) => (
-                <Card
-                  key={item.item_id}
-                  item={item}
-                  index={i}
-                  decision={decisions[item.item_id]}
-                  onDecide={decider}
-                />
-              ))}
+      {vue === "planche" ? (
+        <main className="contenu">
+          <Planche
+            prenomCliente={prenom(nom)}
+            occasionLabel={occasionLabel}
+            dateStr={dateSeance}
+            pieces={selection}
+            envoyee={envoyee}
+            onEnvoyer={() => setEnvoyee(true)}
+            onNouvelleSeance={resetSeance}
+            onRetour={() => setVue("seance")}
+            articleLabel={articleLabel}
+            couleurLabel={couleurLabel}
+          />
+        </main>
+      ) : (
+        <>
+          <section className="barre-seance">
+            <div className="cliente">
+              <div className="avatar-cliente serif">{initiales(nom)}</div>
+              <div className="cliente-infos">
+                <label className="sr-only" htmlFor="select-cliente">
+                  Choisir une cliente
+                </label>
+                <select
+                  id="select-cliente"
+                  className="cliente-select serif"
+                  value={clientIdx}
+                  onChange={(e) => changerCliente(Number(e.target.value))}
+                >
+                  {clients.map((c, i) => (
+                    <option key={c.client_id} value={i}>
+                      {NOMS[i % NOMS.length]}
+                    </option>
+                  ))}
+                </select>
+                <p className="cliente-chips">{clientChips(client)}</p>
+              </div>
             </div>
-          </>
-        )}
-      </main>
+            <button
+              type="button"
+              className="cta"
+              onClick={composer}
+              disabled={!client || chargement}
+            >
+              {chargement ? "Composition…" : "Composer la sélection"}
+            </button>
+          </section>
+
+          <nav className="occasions" aria-label="Occasion">
+            {OCCASIONS.map((o) => (
+              <button
+                key={o.id}
+                type="button"
+                className={"pill" + (occasion === o.id ? " pill-active" : "")}
+                onClick={() => changerOccasion(o.id)}
+              >
+                {o.label}
+              </button>
+            ))}
+          </nav>
+
+          <main className="contenu">
+            {erreur && <p className="message-erreur">{erreur}</p>}
+
+            {!items && !erreur && (
+              <div className="accueil">
+                <p className="accueil-titre serif">
+                  Choisissez une cliente et une occasion —<br />
+                  Miroir compose une sélection parmi {CATALOGUE} pièces,
+                  ordonnée pour elle.
+                </p>
+                <p className="accueil-sous">
+                  Gardez les pièces justes, écartez les autres : la proposition
+                  se construit, puis part à la cliente.
+                </p>
+              </div>
+            )}
+
+            {items && (
+              <div className="layout-seance">
+                <div className="colonne">
+                  <p className="selection-titre serif">
+                    Propositions pour {prenom(nom)} — {occasionLabel.toLowerCase()}
+                  </p>
+                  {items.length === 0 ? (
+                    <p className="note-vide">
+                      Plus de pièces à proposer dans ce contexte.
+                    </p>
+                  ) : (
+                    <div className="grille">
+                      {items.map((item, i) => (
+                        <Card
+                          key={item.item_id}
+                          item={item}
+                          index={i}
+                          decision={undefined}
+                          onDecide={decider}
+                        />
+                      ))}
+                    </div>
+                  )}
+                </div>
+                <aside className="rail">
+                  <p className="rail-titre serif">
+                    La sélection — {selection.length}{" "}
+                    {selection.length > 1 ? "pièces" : "pièce"}
+                  </p>
+                  {selection.length === 0 ? (
+                    <p className="rail-vide">
+                      Gardez des pièces pour composer la proposition de{" "}
+                      {prenom(nom)}.
+                    </p>
+                  ) : (
+                    <div className="rail-liste">
+                      {selection.map((item) => (
+                        <div className="rail-item" key={item.item_id}>
+                          <img
+                            className="rail-thumb"
+                            src={`/api/images/${item.item_id}`}
+                            alt=""
+                          />
+                          <div>
+                            <div className="rail-nom">
+                              {articleLabel(item.article_type)}
+                            </div>
+                            <div className="rail-couleur">
+                              {couleurLabel(item.base_colour)}
+                            </div>
+                          </div>
+                        </div>
+                      ))}
+                    </div>
+                  )}
+                  <button
+                    type="button"
+                    className="cta cta-bloc"
+                    disabled={selection.length === 0}
+                    onClick={() => setVue("planche")}
+                  >
+                    Terminer la séance
+                  </button>
+                </aside>
+              </div>
+            )}
+          </main>
+        </>
+      )}
 
       <footer className="trace">
         <span>miroir_reranker @production · v{version}</span>
