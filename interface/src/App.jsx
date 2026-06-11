@@ -1,4 +1,4 @@
-import { useEffect, useState } from "react";
+import { useEffect, useRef, useState } from "react";
 import Card from "./components/Card.jsx";
 import {
   OCCASIONS,
@@ -16,6 +16,8 @@ export default function App() {
   const [occasion, setOccasion] = useState("cocktail");
   const [items, setItems] = useState(null);
   const [decisions, setDecisions] = useState({});
+  const reserveRef = useRef([]);
+  const excludeRef = useRef([]);
   const [chargement, setChargement] = useState(false);
   const [erreur, setErreur] = useState(null);
   const [version, setVersion] = useState("–");
@@ -48,13 +50,15 @@ export default function App() {
         body: JSON.stringify({
           client_id: client.client_id,
           occasion,
-          k: 5,
+          k: 20,
+          exclude_ids: excludeRef.current,
         }),
       });
       if (!r.ok) throw new Error(`HTTP ${r.status}`);
       const data = await r.json();
       setLatence(Math.round(performance.now() - t0));
-      setItems(data.items);
+      reserveRef.current = data.items.slice(5);
+      setItems(data.items.slice(0, 5));
       setDecisions({});
       setComposeePour({
         prenom: prenom(nom),
@@ -68,7 +72,6 @@ export default function App() {
   }
 
   function decider(item, action) {
-    setDecisions((d) => ({ ...d, [item.item_id]: action }));
     fetch("/api/feedback", {
       method: "POST",
       headers: { "Content-Type": "application/json" },
@@ -81,6 +84,25 @@ export default function App() {
         model_version: version,
       }),
     }).catch(() => {});
+
+    if (action === "approved") {
+      setDecisions((d) => ({ ...d, [item.item_id]: "approved" }));
+      return;
+    }
+
+    excludeRef.current = [...excludeRef.current, item.item_id];
+    setItems((prev) => {
+      const idx = prev.findIndex((x) => x.item_id === item.item_id);
+      if (idx === -1) return prev;
+      const next = [...prev];
+      if (reserveRef.current.length > 0) {
+        next[idx] = reserveRef.current[0];
+        reserveRef.current = reserveRef.current.slice(1);
+      } else {
+        next.splice(idx, 1);
+      }
+      return next;
+    });
   }
 
   const dateSeance = new Date().toLocaleDateString("fr-FR", {
@@ -113,7 +135,13 @@ export default function App() {
               id="select-cliente"
               className="cliente-select serif"
               value={clientIdx}
-              onChange={(e) => setClientIdx(Number(e.target.value))}
+              onChange={(e) => {
+                setClientIdx(Number(e.target.value));
+                excludeRef.current = [];
+                reserveRef.current = [];
+                setItems(null);
+                setDecisions({});
+              }}
             >
               {clients.map((c, i) => (
                 <option key={c.client_id} value={i}>
