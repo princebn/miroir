@@ -293,23 +293,27 @@ button:disabled {
   border-radius: 8px;
   overflow: hidden;
   background: #e9e3d4;
+  display: flex;
+  align-items: center;
+  justify-content: center;
 }
 
-.card-visuel img {
-  width: 100%;
-  height: 100%;
+.card-photo {
+  width: 120px;
+  height: 160px;
   object-fit: cover;
   display: block;
+  border: 1px solid rgba(27, 24, 19, 0.1);
+  background: #fff;
 }
 
 .card-placeholder {
-  width: 100%;
-  height: 100%;
   display: flex;
   align-items: flex-end;
-  padding: 10px;
-  font-size: 12px;
+  padding: 8px;
+  font-size: 11px;
   color: rgba(255, 255, 255, 0.85);
+  border: none;
 }
 
 .badge {
@@ -353,7 +357,7 @@ button:disabled {
   margin-top: 8px;
 }
 
-.card-score {
+.card-rang {
   font-size: 13px;
   font-weight: 500;
   color: var(--bordeaux);

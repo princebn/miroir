@@ -16,13 +16,14 @@ export default function Card({ item, index, decision, onDecide }) {
       <div className="card-visuel">
         {imgErreur ? (
           <div
-            className="card-placeholder"
+            className="card-photo card-placeholder"
             style={{ background: PLACEHOLDERS[index % PLACEHOLDERS.length] }}
           >
             {articleLabel(item.article_type)}
           </div>
         ) : (
           <img
+            className="card-photo"
             src={`/api/images/${item.item_id}`}
             alt={`${articleLabel(item.article_type)} ${couleurLabel(item.base_colour)}`}
             loading="lazy"
@@ -37,7 +38,12 @@ export default function Card({ item, index, decision, onDecide }) {
         {couleurLabel(item.base_colour)} · {usageLabel(item.usage)}
       </p>
       <div className="card-pied">
-        <span className="card-score">{Number(item.score).toFixed(2).replace(".", ",")}</span>
+        <span
+          className="card-rang"
+          title={`score du modèle : ${Number(item.score).toFixed(4)}`}
+        >
+          № {index + 1}
+        </span>
         <span className="card-actions">
           <button
             type="button"
