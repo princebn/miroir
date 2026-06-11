@@ -59,3 +59,24 @@ def test_sans_option_comportement_historique():
     scores = [0.9, 0.8, 0.7, 0.6, 0.5]
     res = _run(types, scores)
     assert [r.article_type for r in res].count("Skirts") == 4
+
+
+def test_categories_transmises_au_retrieval():
+    capture = {}
+
+    def fake_retrieve(*_a, **kw):
+        capture.update(kw)
+        return _candidats(["Skirts", "Tops"])
+
+    recommend(
+        "client-test",
+        "cocktail",
+        5,
+        categories=["Bottomwear"],
+        profile_fn=lambda _cid: {},
+        anchor_fn=lambda *_a: None,
+        retrieve_fn=fake_retrieve,
+        feature_fn=lambda *_a: None,
+        model=_FakeModel([0.9, 0.8]),
+    )
+    assert capture.get("categories") == ["Bottomwear"]

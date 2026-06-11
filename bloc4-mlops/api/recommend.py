@@ -14,6 +14,7 @@ def recommend(
     *,
     exclude_ids=None,
     max_per_type=None,
+    categories=None,
     profile_fn,
     anchor_fn,
     retrieve_fn,
@@ -27,7 +28,10 @@ def recommend(
         archetypes = [archetypes]
 
     anchor_vec = anchor_fn(occasion, saison, archetypes)
-    candidates = retrieve_fn(anchor_vec, occasion)
+    if categories:
+        candidates = retrieve_fn(anchor_vec, occasion, categories=categories)
+    else:
+        candidates = retrieve_fn(anchor_vec, occasion)
     if exclude_ids:
         excl = {str(x) for x in exclude_ids}
         candidates = [c for c in candidates if str(c["item_id"]) not in excl]

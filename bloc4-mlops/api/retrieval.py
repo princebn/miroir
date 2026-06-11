@@ -45,6 +45,7 @@ def retrieve_candidates(
     occasion: str,
     n_candidates: int = 200,
     gender_allowed: Iterable[str] = ("Women", "Unisex"),
+    categories: Iterable[str] | None = None,
 ) -> List[dict]:
     usages = OCCASION_TO_USAGES.get(occasion, []) or [
         "Casual",
@@ -54,6 +55,12 @@ def retrieve_candidates(
         "Sports",
     ]
     anchor_str = _vector_literal(anchor)
+    cat_clause = ""
+    params = [anchor_str, list(gender_allowed), usages]
+    if categories:
+        cat_clause = "AND sub_category = ANY(%s)"
+        params.append(list(categories))
+    params.extend([anchor_str, n_candidates])
     sql = f"""
     SELECT
       item_id, master_category, sub_category, article_type,
@@ -63,9 +70,10 @@ def retrieve_candidates(
       (embedding <=> %s::vector) AS cosine_distance
     FROM {CATALOG_TABLE}
     WHERE gender = ANY(%s) AND usage = ANY(%s) AND embedding IS NOT NULL
+    {cat_clause}
     ORDER BY embedding <=> %s::vector
     LIMIT %s
     """
     with _pg() as conn, conn.cursor(cursor_factory=RealDictCursor) as cur:
-        cur.execute(sql, (anchor_str, list(gender_allowed), usages, anchor_str, n_candidates))
+        cur.execute(sql, tuple(params))
         return [dict(row) for row in cur.fetchall()]

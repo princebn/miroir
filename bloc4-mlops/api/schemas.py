@@ -13,6 +13,7 @@ class RecommendRequest(BaseModel):
     occasion: OccasionType
     k: int = Field(default=5, ge=1, le=20)
     exclude_ids: List[str] = Field(default_factory=list)
+    categories: List[str] = Field(default_factory=list)
 
 
 class ItemReco(BaseModel):
