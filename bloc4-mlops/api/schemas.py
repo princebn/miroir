@@ -12,6 +12,7 @@ class RecommendRequest(BaseModel):
     client_id: str = Field(..., min_length=1, max_length=64)
     occasion: OccasionType
     k: int = Field(default=5, ge=1, le=20)
+    exclude_ids: List[str] = Field(default_factory=list)
 
 
 class ItemReco(BaseModel):

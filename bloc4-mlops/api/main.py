@@ -180,6 +180,7 @@ def recommend_endpoint(req: RecommendRequest):
             client_id=req.client_id,
             occasion=req.occasion,
             k=req.k,
+            exclude_ids=req.exclude_ids,
             profile_fn=_load_profile,
             anchor_fn=style_anchor_for_client,
             retrieve_fn=retrieve_candidates,
