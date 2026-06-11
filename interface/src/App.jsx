@@ -54,6 +54,7 @@ export default function App() {
   const excludeRef = useRef([]);
   const seenRef = useRef(new Set());
   const refillingRef = useRef(false);
+  const ajoutsRef = useRef(0);
   const rangRef = useRef(0);
 
   useEffect(() => {
@@ -180,10 +181,9 @@ export default function App() {
         ...(items || []).map((x) => x.item_id),
         ...selection.map((x) => x.item_id),
       ]);
-      setSimilaires({
-        source: item,
-        items: data.filter((d) => !dejaLa.has(d.item_id)).slice(0, 4),
-      });
+      const filtres = data.filter((d) => !dejaLa.has(d.item_id)).slice(0, 4);
+      ajoutsRef.current = 0;
+      setSimilaires({ source: item, total: filtres.length, items: filtres });
     } catch (e) {
       /* silencieux */
     }
@@ -206,6 +206,13 @@ export default function App() {
     excludeRef.current = [...excludeRef.current, item.item_id];
     seenRef.current.add(item.item_id);
     setSelection((prev) => [...prev, item]);
+    ajoutsRef.current += 1;
+    setSimilaires((prev) => {
+      if (!prev) return prev;
+      const restants = prev.items.filter((x) => x.item_id !== item.item_id);
+      if (restants.length === 0) return null;
+      return { ...prev, items: restants };
+    });
   }
 
   function changerFamille(id) {
@@ -235,7 +242,27 @@ export default function App() {
     recharger();
   }
 
+  const [confirmVider, setConfirmVider] = useState(false);
+
+  function viderTout() {
+    selection.forEach((item) => {
+      fetch(
+        `/api/feedback?client_id=${encodeURIComponent(client.client_id)}&item_id=${encodeURIComponent(item.item_id)}`,
+        { method: "DELETE" }
+      ).catch(() => {});
+    });
+    excludeRef.current = excludeRef.current.filter(
+      (id) => !selection.some((x) => x.item_id === id)
+    );
+    setSelection([]);
+    setConfirmVider(false);
+  }
+
   function retirer(item) {
+    fetch(
+      `/api/feedback?client_id=${encodeURIComponent(client.client_id)}&item_id=${encodeURIComponent(item.item_id)}`,
+      { method: "DELETE" }
+    ).catch(() => {});
     setSelection((prev) => prev.filter((x) => x.item_id !== item.item_id));
     excludeRef.current = excludeRef.current.filter((id) => id !== item.item_id);
   }
@@ -369,7 +396,7 @@ export default function App() {
 
             {items && (
               <div className="layout-seance">
-                <div className="colonne">
+                <div className={"colonne" + (similaires ? " colonne-estompee" : "")}>
                   <div className="ligne-propositions">
                     <p className="selection-titre serif">
                       Propositions pour {prenom(nom)} —{" "}
@@ -411,22 +438,32 @@ export default function App() {
                   )}
 
                   {similaires && (
-                    <section className="similaires">
+                    <section className="similaires similaires-scene">
                       <div className="similaires-tete">
-                        <p className="selection-titre serif">
-                          Visuellement proches de la pièce{" "}
-                          {articleLabel(
-                            similaires.source.article_type
-                          ).toLowerCase()}{" "}
-                          — voisinage d'embeddings CLIP
-                        </p>
-                        <button
-                          type="button"
-                          className="btn-texte"
-                          onClick={() => setSimilaires(null)}
-                        >
-                          Fermer
-                        </button>
+                        <div>
+                          <p className="similaires-surtitre">
+                            VOISINAGE VISUEL — EMBEDDINGS CLIP
+                          </p>
+                          <p className="similaires-titre serif">
+                            Les {similaires.total} pièces les plus proches de
+                            cette {articleLabel(similaires.source.article_type).toLowerCase()}
+                          </p>
+                        </div>
+                        <div className="similaires-actions">
+                          {ajoutsRef.current > 0 && (
+                            <span className="similaires-compteur">
+                              {ajoutsRef.current}/{similaires.total} ajoutée
+                              {ajoutsRef.current > 1 ? "s" : ""}
+                            </span>
+                          )}
+                          <button
+                            type="button"
+                            className="btn-texte"
+                            onClick={() => setSimilaires(null)}
+                          >
+                            Fermer
+                          </button>
+                        </div>
                       </div>
                       <div className="similaires-liste">
                         {similaires.items.map((item) => (
@@ -466,10 +503,41 @@ export default function App() {
                   )}
                 </div>
                 <aside className="rail">
-                  <p className="rail-titre serif">
-                    La sélection — {selection.length}{" "}
-                    {selection.length > 1 ? "pièces" : "pièce"}
-                  </p>
+                  <div className="rail-tete">
+                    <p className="rail-titre serif">
+                      La sélection — {selection.length}{" "}
+                      {selection.length > 1 ? "pièces" : "pièce"}
+                    </p>
+                    {selection.length > 0 &&
+                      (confirmVider ? (
+                        <span className="rail-confirm">
+                          Vider ?{" "}
+                          <button
+                            type="button"
+                            className="btn-texte"
+                            onClick={viderTout}
+                          >
+                            Oui
+                          </button>
+                          <span aria-hidden="true"> · </span>
+                          <button
+                            type="button"
+                            className="btn-texte"
+                            onClick={() => setConfirmVider(false)}
+                          >
+                            Annuler
+                          </button>
+                        </span>
+                      ) : (
+                        <button
+                          type="button"
+                          className="btn-texte rail-vider"
+                          onClick={() => setConfirmVider(true)}
+                        >
+                          tout vider
+                        </button>
+                      ))}
+                  </div>
                   {selection.length === 0 ? (
                     <p className="rail-vide">
                       Gardez des pièces pour composer la proposition de{" "}
