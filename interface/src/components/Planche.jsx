@@ -1,3 +1,5 @@
+import { couleurHex } from "../labels.js";
+
 export default function Planche({
   prenomCliente,
   occasionLabel,
@@ -26,13 +28,21 @@ export default function Planche({
             <div className="plaque-visuel">
               <img
                 className="card-photo"
+                title={item.product_display_name || undefined}
                 src={`/api/images/${item.item_id}`}
                 alt={`${articleLabel(item.article_type)} ${couleurLabel(item.base_colour)}`}
               />
             </div>
             <figcaption>
               <div className="plaque-nom">{articleLabel(item.article_type)}</div>
-              <div className="plaque-couleur">{couleurLabel(item.base_colour)}</div>
+              <div className="plaque-couleur">
+                <span
+                  className="pastille"
+                  style={{ background: couleurHex(item.base_colour) }}
+                  aria-hidden="true"
+                ></span>
+                {couleurLabel(item.base_colour)}
+              </div>
             </figcaption>
           </figure>
         ))}

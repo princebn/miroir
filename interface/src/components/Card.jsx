@@ -1,5 +1,5 @@
 import { useState } from "react";
-import { articleLabel, couleurLabel, usageLabel } from "../labels.js";
+import { articleLabel, couleurHex, couleurLabel, usageLabel } from "../labels.js";
 
 const PLACEHOLDERS = ["#c7b9a6", "#8a8f84", "#3e3a45", "#a6553f", "#b5a8b8"];
 
@@ -33,8 +33,18 @@ export default function Card({ item, index, decision, onDecide }) {
         {gardee && <span className="badge badge-gardee">Gardée</span>}
         {ecartee && <span className="badge badge-ecartee">Écartée</span>}
       </div>
-      <h3 className="card-titre serif">{articleLabel(item.article_type)}</h3>
+      <h3
+        className="card-titre serif"
+        title={item.product_display_name || undefined}
+      >
+        {articleLabel(item.article_type)}
+      </h3>
       <p className="card-sous">
+        <span
+          className="pastille"
+          style={{ background: couleurHex(item.base_colour) }}
+          aria-hidden="true"
+        ></span>
         {couleurLabel(item.base_colour)} · {usageLabel(item.usage)}
       </p>
       <div className="card-pied">

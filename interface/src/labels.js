@@ -169,3 +169,43 @@ export function initiales(nom) {
 export function prenom(nom) {
   return nom.split(" ")[0];
 }
+
+const COULEUR_HEX = {
+  Black: "#26221d",
+  White: "#f7f5f0",
+  "Off White": "#efe9dd",
+  Grey: "#9a948a",
+  Charcoal: "#4a463f",
+  Silver: "#c9c5bd",
+  Blue: "#4a6b9a",
+  "Navy Blue": "#2c3a55",
+  "Turquoise Blue": "#4fa3a5",
+  Teal: "#2e6b6b",
+  Green: "#4f7350",
+  Olive: "#6f6f4a",
+  Khaki: "#a39264",
+  Red: "#b03a37",
+  Maroon: "#6e2b33",
+  Burgundy: "#5d2433",
+  Pink: "#d8a0a6",
+  Magenta: "#a8336e",
+  Peach: "#e8b39a",
+  Purple: "#6e5a8e",
+  Lavender: "#b3a5c9",
+  Yellow: "#d9b94a",
+  Mustard: "#c29a3a",
+  Orange: "#cf7b3a",
+  Rust: "#a85a32",
+  Brown: "#6b4a35",
+  Coffee: "#5a4634",
+  Beige: "#cdbda3",
+  Cream: "#ece1c8",
+  Tan: "#c2a075",
+  Gold: "#c2a14a",
+  Bronze: "#9a7444",
+  Copper: "#a96f4a",
+};
+
+export function couleurHex(c) {
+  return COULEUR_HEX[c] || "#b9b0a2";
+}

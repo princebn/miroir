@@ -232,6 +232,8 @@ export default function App() {
         </div>
       </header>
 
+      <h1 className="sr-only">Miroir — séance de recommandation</h1>
+
       {vue === "planche" ? (
         <main className="contenu">
           <Planche

@@ -293,3 +293,12 @@
 .rail-retirer:hover {
   color: var(--encre);
 }
+
+.pastille {
+  display: inline-block;
+  width: 9px;
+  height: 9px;
+  border-radius: 50%;
+  border: 1px solid rgba(27, 24, 19, 0.18);
+  margin-right: 5px;
+}

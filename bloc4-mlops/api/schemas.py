@@ -12,8 +12,8 @@ class RecommendRequest(BaseModel):
     client_id: str = Field(..., min_length=1, max_length=64)
     occasion: OccasionType
     k: int = Field(default=5, ge=1, le=20)
-    exclude_ids: List[str] = Field(default_factory=list)
-    categories: List[str] = Field(default_factory=list)
+    exclude_ids: List[str] = Field(default_factory=list, max_length=500)
+    categories: List[str] = Field(default_factory=list, max_length=20)
 
 
 class ItemReco(BaseModel):
@@ -23,6 +23,7 @@ class ItemReco(BaseModel):
     base_colour: Optional[str] = None
     usage: Optional[str] = None
     image_url: Optional[str] = None
+    product_display_name: Optional[str] = None
 
 
 class RecommendResponse(BaseModel):

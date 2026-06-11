@@ -72,6 +72,7 @@ def recommend(
             base_colour=c.get("base_colour"),
             usage=c.get("usage"),
             image_url=c.get("image_url"),
+            product_display_name=c.get("product_display_name"),
         )
         for c, s in ranked
     ]
