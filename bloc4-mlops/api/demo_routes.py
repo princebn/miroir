@@ -92,3 +92,16 @@ def similar_items(item_id: str, limit: int = 4) -> list[dict]:
             (item_id, item_id, limit),
         )
         return [dict(row) for row in cur.fetchall()]
+
+
+@router.delete("/feedback")
+def delete_feedback(client_id: str, item_id: str) -> dict:
+    """Retire le dernier feedback d'une cliente sur un article (annulation de geste)."""
+    with _pg() as conn, conn.cursor() as cur:
+        cur.execute(
+            "DELETE FROM signals.feedback WHERE client_id = %s AND item_id = %s",
+            (client_id, item_id),
+        )
+        n = cur.rowcount
+        conn.commit()
+    return {"deleted": n}
