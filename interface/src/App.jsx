@@ -14,10 +14,32 @@ import "./seance.css";
 
 const CATALOGUE = "44 419";
 
+const FAMILLES = {
+  tout: null,
+  hauts: ["Topwear"],
+  bas: ["Bottomwear"],
+  robes: ["Dress"],
+  chaussures: ["Shoes", "Sandal", "Flip Flops"],
+  sacs: ["Bags"],
+  bijoux: ["Jewellery", "Watches"],
+};
+
+const FAMILLE_LABELS = [
+  ["tout", "Tout"],
+  ["hauts", "Hauts"],
+  ["bas", "Bas"],
+  ["robes", "Robes"],
+  ["chaussures", "Chaussures"],
+  ["sacs", "Sacs"],
+  ["bijoux", "Bijoux"],
+];
+
 export default function App() {
   const [clients, setClients] = useState([]);
   const [clientIdx, setClientIdx] = useState(0);
   const [occasion, setOccasion] = useState("cocktail");
+  const [famille, setFamille] = useState("tout");
+  const [taille, setTaille] = useState(5);
   const [items, setItems] = useState(null);
   const [selection, setSelection] = useState([]);
   const [vue, setVue] = useState("seance");
@@ -59,7 +81,7 @@ export default function App() {
     rangRef.current = 0;
   }
 
-  async function appelRecommend(excludeList) {
+  async function appelRecommend(excludeList, fam = famille) {
     const r = await fetch("/api/recommend", {
       method: "POST",
       headers: { "Content-Type": "application/json" },
@@ -68,25 +90,26 @@ export default function App() {
         occasion,
         k: 20,
         exclude_ids: excludeList,
+        categories: FAMILLES[fam] || [],
       }),
     });
     if (!r.ok) throw new Error(`HTTP ${r.status}`);
     return (await r.json()).items;
   }
 
-  async function composer() {
+  async function composer(fam = famille) {
     if (!client || chargement) return;
     setChargement(true);
     setErreur(null);
     const t0 = performance.now();
     try {
-      const recus = await appelRecommend(excludeRef.current);
+      const recus = await appelRecommend(excludeRef.current, fam);
       setLatence(Math.round(performance.now() - t0));
       rangRef.current = 0;
       const numerotes = recus.map((it) => ({ ...it, rang: ++rangRef.current }));
       numerotes.forEach((it) => seenRef.current.add(it.item_id));
-      reserveRef.current = numerotes.slice(5);
-      setItems(numerotes.slice(0, 5));
+      reserveRef.current = numerotes.slice(taille);
+      setItems(numerotes.slice(0, taille));
     } catch (e) {
       setErreur("La composition a échoué — vérifie que l'API répond.");
     } finally {
@@ -143,6 +166,38 @@ export default function App() {
       return next;
     });
     recharger();
+  }
+
+  function changerFamille(id) {
+    if (id === famille) return;
+    setFamille(id);
+    if (items !== null) {
+      composer(id);
+    }
+  }
+
+  function changerTaille(n) {
+    if (n === taille) return;
+    setTaille(n);
+    setItems((prev) => {
+      if (!prev) return prev;
+      if (n > prev.length) {
+        const ajout = reserveRef.current.slice(0, n - prev.length);
+        reserveRef.current = reserveRef.current.slice(ajout.length);
+        return [...prev, ...ajout];
+      }
+      if (n < prev.length) {
+        reserveRef.current = [...prev.slice(n), ...reserveRef.current];
+        return prev.slice(0, n);
+      }
+      return prev;
+    });
+    recharger();
+  }
+
+  function retirer(item) {
+    setSelection((prev) => prev.filter((x) => x.item_id !== item.item_id));
+    excludeRef.current = excludeRef.current.filter((id) => id !== item.item_id);
   }
 
   function changerCliente(idx) {
@@ -219,7 +274,7 @@ export default function App() {
             <button
               type="button"
               className="cta"
-              onClick={composer}
+              onClick={() => composer()}
               disabled={!client || chargement}
             >
               {chargement ? "Composition…" : "Composer la sélection"}
@@ -235,6 +290,20 @@ export default function App() {
                 onClick={() => changerOccasion(o.id)}
               >
                 {o.label}
+              </button>
+            ))}
+          </nav>
+
+          <nav className="filtres" aria-label="Type de pièce">
+            <span className="filtres-label">Type</span>
+            {FAMILLE_LABELS.map(([id, label]) => (
+              <button
+                key={id}
+                type="button"
+                className={"pill" + (famille === id ? " pill-active" : "")}
+                onClick={() => changerFamille(id)}
+              >
+                {label}
               </button>
             ))}
           </nav>
@@ -259,9 +328,27 @@ export default function App() {
             {items && (
               <div className="layout-seance">
                 <div className="colonne">
-                  <p className="selection-titre serif">
-                    Propositions pour {prenom(nom)} — {occasionLabel.toLowerCase()}
-                  </p>
+                  <div className="ligne-propositions">
+                    <p className="selection-titre serif">
+                      Propositions pour {prenom(nom)} —{" "}
+                      {occasionLabel.toLowerCase()}
+                    </p>
+                    <span className="taille-controle">
+                      Afficher
+                      {[5, 10, 15].map((n) => (
+                        <button
+                          key={n}
+                          type="button"
+                          className={
+                            "taille-btn" + (taille === n ? " taille-active" : "")
+                          }
+                          onClick={() => changerTaille(n)}
+                        >
+                          {n}
+                        </button>
+                      ))}
+                    </span>
+                  </div>
                   {items.length === 0 ? (
                     <p className="note-vide">
                       Plus de pièces à proposer dans ce contexte.
@@ -307,6 +394,14 @@ export default function App() {
                               {couleurLabel(item.base_colour)}
                             </div>
                           </div>
+                          <button
+                            type="button"
+                            className="rail-retirer"
+                            aria-label="Retirer de la sélection"
+                            onClick={() => retirer(item)}
+                          >
+                            ×
+                          </button>
                         </div>
                       ))}
                     </div>
@@ -329,7 +424,8 @@ export default function App() {
       <footer className="trace">
         <span>miroir_reranker @production · v{version}</span>
         <span>
-          {latence !== null ? `${latence} ms · ` : ""}top 5 sur {CATALOGUE}{" "}
+          {latence !== null ? `${latence} ms · ` : ""}top {taille} sur{" "}
+          {CATALOGUE}{" "}
           articles
         </span>
       </footer>
