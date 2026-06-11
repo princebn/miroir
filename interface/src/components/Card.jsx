@@ -42,7 +42,7 @@ export default function Card({ item, index, decision, onDecide }) {
           className="card-rang"
           title={`score du modèle : ${Number(item.score).toFixed(4)}`}
         >
-          № {index + 1}
+          № {item.rang ?? index + 1}
         </span>
         <span className="card-actions">
           <button

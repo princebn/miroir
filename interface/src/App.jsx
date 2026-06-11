@@ -30,6 +30,7 @@ export default function App() {
   const excludeRef = useRef([]);
   const seenRef = useRef(new Set());
   const refillingRef = useRef(false);
+  const rangRef = useRef(0);
 
   useEffect(() => {
     fetch("/api/clients")
@@ -55,6 +56,7 @@ export default function App() {
     reserveRef.current = [];
     excludeRef.current = [];
     seenRef.current = new Set();
+    rangRef.current = 0;
   }
 
   async function appelRecommend(excludeList) {
@@ -80,9 +82,11 @@ export default function App() {
     try {
       const recus = await appelRecommend(excludeRef.current);
       setLatence(Math.round(performance.now() - t0));
-      recus.forEach((it) => seenRef.current.add(it.item_id));
-      reserveRef.current = recus.slice(5);
-      setItems(recus.slice(0, 5));
+      rangRef.current = 0;
+      const numerotes = recus.map((it) => ({ ...it, rang: ++rangRef.current }));
+      numerotes.forEach((it) => seenRef.current.add(it.item_id));
+      reserveRef.current = numerotes.slice(5);
+      setItems(numerotes.slice(0, 5));
     } catch (e) {
       setErreur("La composition a échoué — vérifie que l'API répond.");
     } finally {
@@ -96,7 +100,9 @@ export default function App() {
     refillingRef.current = true;
     try {
       const recus = await appelRecommend([...seenRef.current]);
-      const nouveaux = recus.filter((it) => !seenRef.current.has(it.item_id));
+      const nouveaux = recus
+        .filter((it) => !seenRef.current.has(it.item_id))
+        .map((it) => ({ ...it, rang: ++rangRef.current }));
       nouveaux.forEach((it) => seenRef.current.add(it.item_id));
       reserveRef.current = [...reserveRef.current, ...nouveaux];
     } catch (e) {
