@@ -5,6 +5,7 @@ import {
   OCCASIONS,
   NOMS,
   articleLabel,
+  couleurHex,
   couleurLabel,
   clientChips,
   initiales,
@@ -48,6 +49,7 @@ export default function App() {
   const [erreur, setErreur] = useState(null);
   const [version, setVersion] = useState("–");
   const [latence, setLatence] = useState(null);
+  const [similaires, setSimilaires] = useState(null);
   const reserveRef = useRef([]);
   const excludeRef = useRef([]);
   const seenRef = useRef(new Set());
@@ -72,6 +74,7 @@ export default function App() {
 
   function resetSeance() {
     setItems(null);
+    setSimilaires(null);
     setSelection([]);
     setEnvoyee(false);
     setVue("seance");
@@ -110,6 +113,7 @@ export default function App() {
       numerotes.forEach((it) => seenRef.current.add(it.item_id));
       reserveRef.current = numerotes.slice(taille);
       setItems(numerotes.slice(0, taille));
+      setSimilaires(null);
     } catch (e) {
       setErreur("La composition a échoué — vérifie que l'API répond.");
     } finally {
@@ -157,15 +161,51 @@ export default function App() {
       const idx = prev.findIndex((x) => x.item_id === item.item_id);
       if (idx === -1) return prev;
       const next = [...prev];
+      next.splice(idx, 1);
       if (reserveRef.current.length > 0) {
-        next[idx] = reserveRef.current[0];
+        next.push(reserveRef.current[0]);
         reserveRef.current = reserveRef.current.slice(1);
-      } else {
-        next.splice(idx, 1);
       }
       return next;
     });
     recharger();
+  }
+
+  async function voirSimilaires(item) {
+    try {
+      const r = await fetch(`/api/similar/${item.item_id}?limit=6`);
+      if (!r.ok) throw new Error(`HTTP ${r.status}`);
+      const data = await r.json();
+      const dejaLa = new Set([
+        ...(items || []).map((x) => x.item_id),
+        ...selection.map((x) => x.item_id),
+      ]);
+      setSimilaires({
+        source: item,
+        items: data.filter((d) => !dejaLa.has(d.item_id)).slice(0, 4),
+      });
+    } catch (e) {
+      /* silencieux */
+    }
+  }
+
+  function garderSimilaire(item) {
+    if (selection.some((x) => x.item_id === item.item_id)) return;
+    fetch("/api/feedback", {
+      method: "POST",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify({
+        client_id: client.client_id,
+        item_id: item.item_id,
+        occasion,
+        action: "approved",
+        score: null,
+        model_version: version,
+      }),
+    }).catch(() => {});
+    excludeRef.current = [...excludeRef.current, item.item_id];
+    seenRef.current.add(item.item_id);
+    setSelection((prev) => [...prev, item]);
   }
 
   function changerFamille(id) {
@@ -364,9 +404,65 @@ export default function App() {
                           index={i}
                           decision={undefined}
                           onDecide={decider}
+                          onVoir={voirSimilaires}
                         />
                       ))}
                     </div>
+                  )}
+
+                  {similaires && (
+                    <section className="similaires">
+                      <div className="similaires-tete">
+                        <p className="selection-titre serif">
+                          Visuellement proches de la pièce{" "}
+                          {articleLabel(
+                            similaires.source.article_type
+                          ).toLowerCase()}{" "}
+                          — voisinage d'embeddings CLIP
+                        </p>
+                        <button
+                          type="button"
+                          className="btn-texte"
+                          onClick={() => setSimilaires(null)}
+                        >
+                          Fermer
+                        </button>
+                      </div>
+                      <div className="similaires-liste">
+                        {similaires.items.map((item) => (
+                          <div className="simil-item" key={item.item_id}>
+                            <div className="simil-visuel">
+                              <img
+                                className="simil-photo"
+                                src={`/api/images/${item.item_id}`}
+                                alt={articleLabel(item.article_type)}
+                                title={item.product_display_name || undefined}
+                              />
+                            </div>
+                            <div className="simil-nom serif">
+                              {articleLabel(item.article_type)}
+                            </div>
+                            <div className="simil-sous">
+                              <span
+                                className="pastille"
+                                style={{
+                                  background: couleurHex(item.base_colour),
+                                }}
+                                aria-hidden="true"
+                              ></span>
+                              {couleurLabel(item.base_colour)}
+                            </div>
+                            <button
+                              type="button"
+                              className="simil-garder"
+                              onClick={() => garderSimilaire(item)}
+                            >
+                              Garder
+                            </button>
+                          </div>
+                        ))}
+                      </div>
+                    </section>
                   )}
                 </div>
                 <aside className="rail">

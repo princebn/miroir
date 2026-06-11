@@ -13,6 +13,9 @@ from pathlib import Path
 import pandas as pd
 from fastapi import APIRouter, HTTPException
 from fastapi.responses import FileResponse
+from psycopg2.extras import RealDictCursor
+
+from api.retrieval import CATALOG_TABLE, _pg
 
 router = APIRouter()
 
@@ -60,3 +63,32 @@ def get_image(item_id: str) -> FileResponse:
     if not path.exists():
         raise HTTPException(status_code=404, detail="image introuvable")
     return FileResponse(path, media_type="image/jpeg")
+
+
+@router.get("/similar/{item_id}")
+def similar_items(item_id: str, limit: int = 4) -> list[dict]:
+    """Voisines visuelles d'un article (cosinus pgvector sur embeddings CLIP)."""
+    if not item_id.isdigit():
+        raise HTTPException(status_code=400, detail="item_id invalide")
+    limit = max(1, min(limit, 12))
+    with _pg() as conn, conn.cursor(cursor_factory=RealDictCursor) as cur:
+        cur.execute(
+            f"SELECT 1 FROM {CATALOG_TABLE} WHERE item_id::text = %s",
+            (item_id,),
+        )
+        if cur.fetchone() is None:
+            raise HTTPException(status_code=404, detail="article introuvable")
+        cur.execute(
+            f"""
+            SELECT item_id::text AS item_id, article_type, base_colour, usage,
+                   product_display_name
+            FROM {CATALOG_TABLE}
+            WHERE embedding IS NOT NULL AND item_id::text <> %s
+            ORDER BY embedding <=> (
+                SELECT embedding FROM {CATALOG_TABLE} WHERE item_id::text = %s
+            )
+            LIMIT %s
+            """,
+            (item_id, item_id, limit),
+        )
+        return [dict(row) for row in cur.fetchall()]

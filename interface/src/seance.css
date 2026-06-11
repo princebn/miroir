@@ -302,3 +302,81 @@
   border: 1px solid rgba(27, 24, 19, 0.18);
   margin-right: 5px;
 }
+
+/* ===== Voisinage visuel (similarite CLIP) ===== */
+
+.card-visuel {
+  width: 100%;
+  cursor: pointer;
+  padding: 0;
+}
+
+.rail-thumb {
+  background: #e9e3d4;
+}
+
+.similaires {
+  margin-top: 26px;
+  border-top: 1px solid var(--ligne);
+  padding-top: 16px;
+}
+
+.similaires-tete {
+  display: flex;
+  justify-content: space-between;
+  align-items: baseline;
+  gap: 14px;
+}
+
+.similaires-liste {
+  display: grid;
+  grid-template-columns: repeat(4, minmax(0, 1fr));
+  gap: 16px;
+  margin-top: 12px;
+  max-width: 640px;
+}
+
+.simil-visuel {
+  aspect-ratio: 3 / 4;
+  border-radius: 6px;
+  background: #e9e3d4;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+}
+
+.simil-photo {
+  width: 84px;
+  height: 112px;
+  object-fit: cover;
+  border: 1px solid rgba(27, 24, 19, 0.1);
+  background: #fff;
+}
+
+.simil-nom {
+  font-size: 12.5px;
+  margin-top: 7px;
+}
+
+.simil-sous {
+  font-size: 11px;
+  color: var(--muted);
+  margin-top: 1px;
+}
+
+.simil-garder {
+  margin-top: 7px;
+  font-size: 11.5px;
+  padding: 4px 12px;
+  border-radius: 999px;
+  border: 1px solid var(--ligne);
+  color: var(--encre);
+  transition: border-color 200ms ease-out, background 200ms ease-out,
+    color 200ms ease-out;
+}
+
+.simil-garder:hover {
+  background: var(--encre);
+  border-color: var(--encre);
+  color: var(--ivoire);
+}

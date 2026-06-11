@@ -80,3 +80,39 @@ def test_categories_transmises_au_retrieval():
         model=_FakeModel([0.9, 0.8]),
     )
     assert capture.get("categories") == ["Bottomwear"]
+
+
+def test_diversification_plafonne_par_couleur():
+    cands = [
+        {
+            "item_id": str(i),
+            "article_type": t,
+            "base_colour": col,
+            "usage": "Formal",
+            "image_url": "",
+        }
+        for i, (t, col) in enumerate(
+            [
+                ("Skirts", "Black"),
+                ("Tops", "Black"),
+                ("Heels", "Black"),
+                ("Handbags", "Black"),
+                ("Jackets", "Red"),
+                ("Dresses", "Green"),
+            ]
+        )
+    ]
+    res = recommend(
+        "client-test",
+        "cocktail",
+        5,
+        max_per_colour=3,
+        profile_fn=lambda _cid: {},
+        anchor_fn=lambda *_a: None,
+        retrieve_fn=lambda *_a, **_k: cands,
+        feature_fn=lambda *_a: None,
+        model=_FakeModel([0.9, 0.8, 0.7, 0.6, 0.5, 0.4]),
+    )
+    couleurs = [r.base_colour for r in res]
+    assert couleurs.count("Black") == 3
+    assert len(res) == 5

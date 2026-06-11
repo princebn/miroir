@@ -14,6 +14,7 @@ def recommend(
     *,
     exclude_ids=None,
     max_per_type=None,
+    max_per_colour=None,
     categories=None,
     profile_fn,
     anchor_fn,
@@ -43,17 +44,22 @@ def recommend(
 
     ranked = sorted(zip(candidates, scores), key=lambda x: float(x[1]), reverse=True)
 
-    if max_per_type:
-        # Diversification du slate : au plus max_per_type pieces par type
-        # d'article, complete par les meilleurs scores restants.
+    if max_per_type or max_per_colour:
+        # Diversification du slate : plafonds par type d'article et par
+        # couleur, completes par les meilleurs scores restants.
         selected = []
         overflow = []
-        counts = {}
+        type_counts = {}
+        colour_counts = {}
         for pair in ranked:
             t = str(pair[0].get("article_type") or "").lower()
-            if counts.get(t, 0) < max_per_type:
+            c = str(pair[0].get("base_colour") or "").lower()
+            type_ok = not max_per_type or type_counts.get(t, 0) < max_per_type
+            colour_ok = not max_per_colour or colour_counts.get(c, 0) < max_per_colour
+            if type_ok and colour_ok:
                 selected.append(pair)
-                counts[t] = counts.get(t, 0) + 1
+                type_counts[t] = type_counts.get(t, 0) + 1
+                colour_counts[c] = colour_counts.get(c, 0) + 1
             else:
                 overflow.append(pair)
             if len(selected) >= k:

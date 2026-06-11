@@ -182,6 +182,7 @@ def recommend_endpoint(req: RecommendRequest):
             k=req.k,
             exclude_ids=req.exclude_ids,
             max_per_type=2,
+            max_per_colour=3,
             categories=req.categories or None,
             profile_fn=_load_profile,
             anchor_fn=style_anchor_for_client,

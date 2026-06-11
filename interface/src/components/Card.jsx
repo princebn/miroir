@@ -3,7 +3,7 @@ import { articleLabel, couleurHex, couleurLabel, usageLabel } from "../labels.js
 
 const PLACEHOLDERS = ["#c7b9a6", "#8a8f84", "#3e3a45", "#a6553f", "#b5a8b8"];
 
-export default function Card({ item, index, decision, onDecide }) {
+export default function Card({ item, index, decision, onDecide, onVoir }) {
   const [imgErreur, setImgErreur] = useState(false);
   const ecartee = decision === "rejected";
   const gardee = decision === "approved";
@@ -13,7 +13,12 @@ export default function Card({ item, index, decision, onDecide }) {
       className={"card" + (ecartee ? " card-ecartee" : "")}
       style={{ animationDelay: `${index * 60}ms` }}
     >
-      <div className="card-visuel">
+      <button
+        type="button"
+        className="card-visuel"
+        aria-label="Voir les pièces visuellement proches"
+        onClick={() => onVoir && onVoir(item)}
+      >
         {imgErreur ? (
           <div
             className="card-photo card-placeholder"
@@ -32,7 +37,7 @@ export default function Card({ item, index, decision, onDecide }) {
         )}
         {gardee && <span className="badge badge-gardee">Gardée</span>}
         {ecartee && <span className="badge badge-ecartee">Écartée</span>}
-      </div>
+      </button>
       <h3
         className="card-titre serif"
         title={item.product_display_name || undefined}
