@@ -11,3 +11,4 @@ Décisions structurantes de la solution d'IA Miroir, au format MADR simplifié.
 | [0005](0005-reentrainement-promotion-conditionnelle.md) | Réentraînement à promotion conditionnelle + rollback |
 | [0006](0006-monitoring-drift-double-critere.md) | Monitoring de drift à double critère |
 | [0007](0007-separation-environnements-python.md) | Séparation des environnements Python |
+| [0008](0008-diversification-slate.md) | Diversification du slate de recommandation |
