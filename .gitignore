@@ -33,3 +33,4 @@ bloc4-mlops/data/synthetic/*.csv
 bloc4-mlops/data/synthetic/*.parquet
 mlruns/
 mlflow.db
+.DS_Store
